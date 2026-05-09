@@ -66,6 +66,13 @@ textarea.input{min-height:80px;resize:vertical}
 .board-header{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;flex-wrap:wrap;gap:12px}
 .board-title{font-size:1.5rem;font-weight:600;display:flex;align-items:center;gap:10px}
 .board-title i{color:var(--primary-light)}
+
+/* Classroom Tabs */
+.classroom-tabs {display:flex; gap:12px; overflow-x:auto; padding:0 32px 16px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:20px;}
+.classroom-tab {padding:10px 20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; cursor:pointer; white-space:nowrap; transition:all .2s; display:flex; align-items:center; gap:10px; font-weight:500; font-family:inherit; color:var(--text);}
+.classroom-tab:hover {background:rgba(255,255,255,0.08);}
+.classroom-tab.active {background:linear-gradient(135deg,rgba(20,184,166,0.15),rgba(99,102,241,0.15)); border-color:var(--primary-light); color:var(--primary-light);}
+
 .board-body{padding:0 32px 40px;max-width:1200px;margin:0 auto}
 /* Sections */
 .sections-container{display:flex;gap:24px;align-items:flex-start}
@@ -182,53 +189,15 @@ textarea.input{min-height:80px;resize:vertical}
 <div class="page active" id="pageLanding">
 <div class="landing" style="align-items:center">
   <h1>🎓 Thawatchai Board</h1>
-  <p>ระบบบอร์ดส่งงานและเก็บงานสำหรับการเรียนการสอน พร้อมบันทึกข้อมูลออนไลน์</p>
-  <button class="btn btn-primary" onclick="goToTemplates()" style="font-size:1.1rem;padding:14px 40px"><i class="fas fa-plus"></i>สร้างบอร์ดออนไลน์</button>
+  <p>เลือกกระดานส่งงานด้านล่างเพื่อเข้าสู่บทเรียน หรือเข้าผ่านลิงก์ที่คุณครูส่งให้</p>
   <div class="landing-section" id="myBoardsSection" style="display:none">
-    <h2><i class="fas fa-history"></i>บอร์ดของฉัน</h2>
+    <h2><i class="fas fa-chalkboard"></i> กระดานส่งงานทั้งหมด</h2>
     <div class="board-list" id="boardList"></div>
   </div>
 </div>
 </div>
 
-<!-- Page: Template Selection -->
-<div class="page" id="pageTemplate">
-<div class="template-page">
-<h2>เลือกเทมเพลต</h2>
-<p>เลือกรูปแบบที่ต้องการ</p>
-<div class="template-grid">
-<div class="template-card" onclick="selectTemplate('wall',this)">
-<div class="template-icon"><i class="fas fa-th-large"></i></div>
-<h3>วอลล์ (Wall)</h3>
-<p>แสดงผลแบบกริดอิสระ</p>
-</div>
-<div class="template-card" onclick="selectTemplate('column',this)">
-<div class="template-icon"><i class="fas fa-columns"></i></div>
-<h3>คอลัมน์ (Column)</h3>
-<p>จัดกลุ่มตามหัวข้อ</p>
-</div>
-<div class="template-card" onclick="selectTemplate('timeline',this)">
-<div class="template-icon"><i class="fas fa-stream"></i></div>
-<h3>ไทม์ไลน์ (Timeline)</h3>
-<p>แสดงผลลำดับเวลา</p>
-</div>
-</div>
-<div style="text-align:center;margin-top:32px">
-<button class="btn btn-primary" onclick="goToNaming()" id="btnNextTemplate" disabled style="opacity:.5">ถัดไป</button>
-</div>
-</div>
-</div>
 
-<!-- Page: Board Naming -->
-<div class="page" id="pageNaming">
-<div class="board-name-page">
-<div class="name-form">
-<h2>ตั้งชื่อบอร์ด</h2>
-<div class="form-group"><input class="input" id="boardNameInput" placeholder="ชื่อบอร์ด..."></div>
-<button class="btn btn-primary" onclick="createBoard()" style="width:100%">สร้างบอร์ด</button>
-</div>
-</div>
-</div>
 
 <!-- Page: Board View -->
 <div class="page" id="pageBoard">
@@ -236,9 +205,12 @@ textarea.input{min-height:80px;resize:vertical}
 <div class="board-title"><i class="fas fa-chalkboard"></i><span id="boardTitleText"></span></div>
 <div id="boardControls"></div>
 </div>
+
+<!-- Classroom Tabs -->
+<div class="classroom-tabs" id="studentClassroomTabs"></div>
+
 <div class="board-body">
 <div id="sectionsContainer" class="sections-container"></div>
-<button class="add-section-btn" onclick="addSection()"><i class="fas fa-plus"></i>เพิ่มส่วนใหม่</button>
 </div>
 </div>
 </div>
@@ -289,78 +261,114 @@ textarea.input{min-height:80px;resize:vertical}
 </div>
 </div>
 
-<!-- Rename Board Modal -->
-<div class="modal-overlay" id="modalRenameBoard">
-<div class="modal modal-sm" style="max-width:380px">
-  <h3 style="font-size:1.1rem;margin-bottom:14px"><i class="fas fa-pen"></i>แก้ไขชื่อบอร์ด</h3>
-  <div class="form-group">
-    <label>ชื่อบอร์ดใหม่</label>
-    <input class="input" id="renameBoardInput" placeholder="ชื่อบอร์ด..." onkeydown="if(event.key==='Enter') confirmRenameBoard()">
-  </div>
-  <div class="modal-actions" style="margin-top:16px">
-    <button class="btn btn-glass btn-sm" onclick="closeModal('modalRenameBoard')">ยกเลิก</button>
-    <button class="btn btn-primary btn-sm" onclick="confirmRenameBoard()"><i class="fas fa-check"></i>บันทึก</button>
-  </div>
-</div>
-</div>
+
 
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p>กำลังเชื่อมต่อข้อมูล...</p></div>
 
-<div class="ctx-menu" id="ctxMenu">
-<button class="ctx-item" onclick="ctxAction('write')"><i class="fas fa-pen"></i>เขียนเนื้อหา</button>
-<button class="ctx-item" onclick="ctxAction('addpost')"><i class="fas fa-plus"></i>เพิ่มโพสต์</button>
-<button class="ctx-item" onclick="ctxAction('rename')"><i class="fas fa-i-cursor"></i>เปลี่ยนชื่อส่วน</button>
-<button class="ctx-item" onclick="ctxAction('cloneSection')"><i class="fas fa-copy"></i>คัดลอกส่วน</button>
-<div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0"></div>
-<button class="ctx-item" onclick="ctxAction('clear')"><i class="fas fa-eraser"></i>ล้างเนื้อหา</button>
-<button class="ctx-item" onclick="ctxAction('copylink')"><i class="fas fa-link"></i>คัดลอกลิงก์แชร์</button>
-<div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0"></div>
-<button class="ctx-item" style="color:#f87171" onclick="ctxAction('delete')"><i class="fas fa-trash-alt" style="color:#f87171"></i>ลบส่วนนี้</button>
-</div>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDQXuhyMyzYqR41zSQUjk-2D7_a99pFEEY",
-  authDomain: "project-8188913905587846369.firebaseapp.com",
-  databaseURL: "https://project-8188913905587846369-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "project-8188913905587846369",
-  storageBucket: "project-8188913905587846369.firebasestorage.app",
-  messagingSenderId: "953537734002",
-  appId: "1:953537734002:web:d706ed8794905c4789a9eb"
+  apiKey: "AIzaSyAW8vcTatshwGbi9N_SOJoxhwt9ckPiYis",
+  authDomain: "classcoin-99bf6.firebaseapp.com",
+  databaseURL: "https://classcoin-99bf6-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "classcoin-99bf6",
+  storageBucket: "classcoin-99bf6.firebasestorage.app",
+  messagingSenderId: "736532364280",
+  appId: "1:736532364280:web:6f3b07131119c1e0e1b40d",
+  measurementId: "G-PR39YY9NJS"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-let boardId = null, boardData = {name:'', sections:[]}, tpl = 'wall', curIdx = null, ctxIdx = null;
+let boardId = null, boardData = {name:'', classrooms:[]}, tpl = 'wall', curIdx = null, activeClassroomIndex = 0;
 
-async function save(){ if(boardId) await set(ref(db, 'boards/'+boardId), boardData); }
+async function save(){ 
+    if(boardId) {
+        await set(ref(db, 'boards/'+boardId), boardData); 
+        await set(ref(db, 'boards_index/'+boardId), { 
+            name: boardData.name, 
+            ts: Date.now(), 
+            tpl: boardData.tpl || 'wall',
+            createdBy: boardData.createdBy || null
+        });
+    }
+}
+
 async function load(id){
     document.getElementById('loadingOverlay').classList.add('active');
-    const snap = await get(ref(db, 'boards/'+id));
-    if(snap.exists()){
-        boardId = id; boardData = snap.val(); tpl = boardData.tpl || 'wall';
-        saveHistory(boardId, boardData.name);
-        render(); showPage('pageBoard');
-        document.getElementById('headerActions').innerHTML = `
-            <button class="btn btn-glass btn-sm" onclick="shareBoard()"><i class="fas fa-share-alt"></i> แชร์</button>
-            <button class="btn btn-glass btn-sm" onclick="goHome()"><i class="fas fa-home"></i> หน้าหลัก</button>
-        `;
-    } else {
-        showToast('ไม่พบบอร์ดนี้ในระบบ','fas fa-exclamation-triangle');
-        window.location.hash = '';
-    }
-    document.getElementById('loadingOverlay').classList.remove('active');
+    
+    // Listen for realtime updates on this specific board instead of just get()
+    onValue(ref(db, 'boards/'+id), (snap) => {
+        if(snap.exists()){
+            boardId = id; 
+            boardData = snap.val(); 
+            tpl = boardData.tpl || 'wall';
+            
+            // Migrate old data on the fly
+            if(boardData.sections && !boardData.classrooms) {
+                boardData.classrooms = [{
+                    id: Date.now(),
+                    name: 'ห้องเรียนรวม',
+                    assignments: boardData.sections
+                }];
+                // We don't delete sections from db here since it's a readonly listener usually, but we modify our local object.
+                delete boardData.sections;
+            }
+            if(!boardData.classrooms) boardData.classrooms = [];
+            
+            render(); 
+            showPage('pageBoard');
+            document.getElementById('headerActions').innerHTML = `
+                <button class="btn btn-glass btn-sm" onclick="shareBoard()"><i class="fas fa-share-alt"></i> แชร์</button>
+                <button class="btn btn-glass btn-sm" onclick="goHome()"><i class="fas fa-home"></i> หน้าหลัก</button>
+            `;
+        } else {
+            showToast('ไม่พบบอร์ดนี้ในระบบ','fas fa-exclamation-triangle');
+            window.location.hash = '';
+            goHome();
+        }
+        document.getElementById('loadingOverlay').classList.remove('active');
+    });
 }
+
+window.selectStudentClassroom = (i) => {
+    activeClassroomIndex = i;
+    render();
+};
 
 function render(){
     document.getElementById('boardTitleText').textContent = boardData.name;
+    
+    // Render Classroom Tabs
+    const tabsContainer = document.getElementById('studentClassroomTabs');
+    tabsContainer.innerHTML = (boardData.classrooms || []).map((c, i) => `
+        <button class="classroom-tab ${i === activeClassroomIndex ? 'active' : ''}" onclick="selectStudentClassroom(${i})">
+            <i class="fas fa-users"></i> ${c.name}
+        </button>
+    `).join('');
+
     const c = document.getElementById('sectionsContainer');
     c.className = 'sections-container layout-'+tpl;
     c.innerHTML = '';
-    boardData.sections.forEach((s,i)=>{
+    
+    if(!boardData.classrooms || boardData.classrooms.length === 0) {
+        c.innerHTML = '<div style="color:var(--text2);padding:20px;">บอร์ดนี้ยังไม่มีห้องเรียนและงาน</div>';
+        return;
+    }
+    
+    if(activeClassroomIndex >= boardData.classrooms.length) activeClassroomIndex = 0;
+    const activeClassroom = boardData.classrooms[activeClassroomIndex];
+    
+    if(!activeClassroom.assignments || activeClassroom.assignments.length === 0) {
+        c.innerHTML = '<div style="color:var(--text2);padding:20px;">ห้องเรียนนี้ยังไม่มีงานมอบหมาย</div>';
+        return;
+    }
+    
+    activeClassroom.assignments.forEach((s,i)=>{
         const div = document.createElement('div'); div.className = 'section';
         const postsHTML = s.posts ? s.posts.map((p,pi)=>{
             const imgAttach = p.attachments ? p.attachments.filter(a=>a.dataUrl) : [];
@@ -371,129 +379,71 @@ function render(){
             const chipsHTML = fileAttach.length
                 ? `<div class="post-chips">${fileAttach.map(a=>`<span class="chip"><i class="fas fa-${a.icon}"></i>${a.name}</span>`).join('')}</div>`
                 : '';
+            const isGraded = p.isGraded === true;
+            const badgeHTML = isGraded 
+                ? `<span style="background:rgba(20,184,166,0.15);color:var(--primary-light);border:1px solid rgba(20,184,166,0.3);padding:2px 8px;border-radius:12px;font-size:0.75rem;margin-bottom:8px;display:inline-block;"><i class="fas fa-check-double"></i> ตรวจแล้ว</span>`
+                : `<span style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);padding:2px 8px;border-radius:12px;font-size:0.75rem;margin-bottom:8px;display:inline-block;"><i class="fas fa-hourglass-half"></i> กำลังรอตรวจ</span>`;
+                
+            const actionsHTML = isGraded 
+                ? '' 
+                : `<div class="post-actions">
+                    <button class="icon-btn" title="แก้ไข" onclick="editPost(${i},${pi})"><i class="fas fa-pen" style="color:#94a3b8"></i></button>
+                    <button class="icon-btn" onclick="askDel('ลบโพสต์?',()=>delPost(${i},${pi}))"><i class="fas fa-trash-alt" style="color:#f87171"></i></button>
+                </div>`;
+                
             return `<div class="post">
+                ${badgeHTML}
                 <div class="post-title"><i class="fas fa-file-alt" style="color:var(--accent);font-size:.8rem"></i>${p.title}</div>
                 ${p.desc ? `<div class="post-meta">${p.desc}</div>` : ''}
                 ${imagesHTML}${chipsHTML}
-                <div class="post-actions">
-                    <button class="icon-btn" title="แก้ไข" onclick="editPost(${i},${pi})"><i class="fas fa-pen" style="color:#94a3b8"></i></button>
-                    <button class="icon-btn" onclick="askDel('ลบโพสต์?',()=>delPost(${i},${pi}))"><i class="fas fa-trash-alt" style="color:#f87171"></i></button>
-                </div>
+                ${actionsHTML}
             </div>`;
         }).join('') : '';
         div.innerHTML = `
         <div class="section-header">
-            <div class="section-name"><i class="fas fa-bookmark"></i><span contenteditable="true" onblur="saveName(${i},this.innerText)">${s.name}</span></div>
-            <div class="section-actions">
-                <button class="icon-btn" onclick="openPost(${i})"><i class="fas fa-plus"></i></button>
-                <button class="icon-btn" style="color:#f87171" onclick="askDel('ลบส่วนนี้?',()=>delSec(${i}))"><i class="fas fa-trash-alt"></i></button>
-                <button class="icon-btn" onclick="openCtx(event,${i})"><i class="fas fa-ellipsis-v"></i></button>
-            </div>
+            <div class="section-name"><i class="fas fa-tasks"></i><span>${s.name}</span></div>
         </div>
         <div class="section-body">
-            <div class="section-desc" contenteditable="true" onblur="saveDesc(${i},this.innerText)" data-placeholder="เขียนเนื้อหา...">${s.desc||''}</div>
+            ${s.desc ? `<div class="section-desc">${s.desc}</div>` : ''}
             <div class="posts">${postsHTML}</div>
-            <button class="add-post-btn" onclick="openPost(${i})"><i class="fas fa-plus"></i>เพิ่มโพสต์</button>
+            <button class="add-post-btn" onclick="openPost(${i})"><i class="fas fa-plus"></i>ส่งงาน</button>
         </div>`;
         c.appendChild(div);
     });
 }
 
-// --- Board History (localStorage) ---
-function getHistory(){ try{ return JSON.parse(localStorage.getItem('twc_boards')||'[]'); }catch(e){return [];} }
-function saveHistory(id, name){ const h=getHistory().filter(b=>b.id!==id); h.unshift({id,name,ts:Date.now()}); localStorage.setItem('twc_boards', JSON.stringify(h.slice(0,20))); }
-function removeHistory(id){ const h=getHistory().filter(b=>b.id!==id); localStorage.setItem('twc_boards',JSON.stringify(h)); }
+// --- Real-time Boards ---
+let allBoards = {};
+function initRealtimeBoards() {
+    onValue(ref(db, 'boards_index'), (snap) => {
+        allBoards = snap.exists() ? snap.val() : {};
+        renderBoardList();
+    });
+}
+
 function renderBoardList(){
-    const h=getHistory(), sec=document.getElementById('myBoardsSection'), list=document.getElementById('boardList');
-    if(!h.length){sec.style.display='none';return;}
+    const sec=document.getElementById('myBoardsSection'), list=document.getElementById('boardList');
+    let boardArray = Object.keys(allBoards).map(id => ({ id, ...allBoards[id] }));
     
-    // Sort by name (Thai/English)
-    h.sort((a, b) => a.name.localeCompare(b.name, 'th'));
+    if(!boardArray.length){sec.style.display='none';return;}
+    
+    // Sort newest first
+    boardArray.sort((a, b) => (b.ts || 0) - (a.ts || 0));
     
     sec.style.display='block';
-    list.innerHTML=h.map(b=>`<div class="board-card" onclick="openBoard('${b.id}')">
+    list.innerHTML=boardArray.map(b=>`<div class="board-card" onclick="openBoard('${b.id}')">
         <div class="board-card-title"><i class="fas fa-chalkboard"></i>${b.name}</div>
-        <div class="board-card-date"><i class="fas fa-clock"></i> ${new Date(b.ts).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})}</div>
-        <div class="board-card-actions" onclick="event.stopPropagation()">
-            <button class="board-card-act" onclick="renameBoard('${b.id}','${b.name.replace(/'/g,"\'")}')" title="แก้ไขชื่อ"><i class="fas fa-pen"></i>แก้ชื่อ</button>
-            <button class="board-card-act" onclick="copyBoard('${b.id}')" title="คัดลอกบอร์ด"><i class="fas fa-copy"></i>คัดลอก</button>
-            <button class="board-card-act danger" onclick="removeBoardFromList(event,'${b.id}')" title="ลบออกจากรายการ"><i class="fas fa-times"></i>ลบ</button>
-        </div>
+        <div class="board-card-date"><i class="fas fa-clock"></i> เปิดเมื่อ: ${b.ts ? new Date(b.ts).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '-'}</div>
     </div>`).join('');
 }
 window.openBoard = (id) => { window.location.hash = id; load(id); };
-window.removeBoardFromList = (e, id) => {
-    e.stopPropagation();
-    askDel('ลบบอร์ดนี้ออกจากรายการหรือไม่? (ข้อมูลใน Firebase ยังคงอยู่)', () => {
-        removeHistory(id); renderBoardList();
-    });
-};
-let renameBoardId = null;
-window.renameBoard = (id, oldName) => {
-    renameBoardId = id;
-    document.getElementById('renameBoardInput').value = oldName;
-    document.getElementById('modalRenameBoard').classList.add('active');
-    setTimeout(()=>document.getElementById('renameBoardInput').select(), 100);
-};
 window.shareBoard = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url)
         .then(() => showToast('คัดลอกลิงก์บอร์ดแล้ว สามารถส่งให้คนอื่นได้เลย!'))
         .catch(() => showToast('ไม่สามารถคัดลอกลิงก์ได้', 'fas fa-times-circle'));
 };
-window.confirmRenameBoard = async () => {
-    const newName = document.getElementById('renameBoardInput').value.trim();
-    if(!newName) return;
-    closeModal('modalRenameBoard');
-    document.getElementById('loadingOverlay').classList.add('active');
-    try{
-        const snap = await get(ref(db,'boards/'+renameBoardId));
-        if(snap.exists()){
-            const d = snap.val(); d.name = newName;
-            await set(ref(db,'boards/'+renameBoardId), d);
-            saveHistory(renameBoardId, newName);
-            renderBoardList();
-            showToast('เปลี่ยนชื่อบอร์ดแล้ว');
-        }
-    }catch(e){ showToast('เกิดข้อผิดพลาด', 'fas fa-times-circle'); }
-    document.getElementById('loadingOverlay').classList.remove('active');
-};
-window.copyBoard = async (id) => {
-    document.getElementById('loadingOverlay').classList.add('active');
-    try{
-        const snap = await get(ref(db,'boards/'+id));
-        if(snap.exists()){
-            const d = JSON.parse(JSON.stringify(snap.val()));
-            const newId = 'B-'+Math.random().toString(36).substr(2,9);
-            d.name = d.name + ' (สำเนา)';
-            await set(ref(db,'boards/'+newId), d);
-            saveHistory(newId, d.name);
-            renderBoardList();
-            showToast('คัดลอกบอร์ดแล้ว! ดูในรายการด้านล่าง');
-        }
-    }catch(e){ showToast('เกิดข้อผิดพลาด', 'fas fa-times-circle'); }
-    document.getElementById('loadingOverlay').classList.remove('active');
-};
-
 window.goHome = () => { window.location.hash = ''; renderBoardList(); showPage('pageLanding'); document.getElementById('headerActions').innerHTML=''; };
-window.goToTemplates = () => showPage('pageTemplate');
-window.selectTemplate = (t, el) => { tpl = t; document.querySelectorAll('.template-card').forEach(c=>c.classList.remove('selected')); el.classList.add('selected'); document.getElementById('btnNextTemplate').disabled = false; document.getElementById('btnNextTemplate').style.opacity = '1'; };
-window.goToNaming = () => showPage('pageNaming');
-window.createBoard = async () => {
-    const name = document.getElementById('boardNameInput').value.trim(); if(!name) return;
-    boardId = 'B-'+Math.random().toString(36).substr(2,9);
-    boardData = { name, tpl, sections: [{id:Date.now(), name:'ส่วนที่ 1', desc:'', posts:[]}] };
-    window.location.hash = boardId;
-    saveHistory(boardId, name);
-    save(); render(); showPage('pageBoard');
-    document.getElementById('headerActions').innerHTML = `
-        <button class="btn btn-glass btn-sm" onclick="shareBoard()"><i class="fas fa-share-alt"></i> แชร์</button>
-        <button class="btn btn-glass btn-sm" onclick="goHome()"><i class="fas fa-home"></i> หน้าหลัก</button>
-    `;
-};
-window.addSection = () => { boardData.sections.push({id:Date.now(), name:'ส่วนที่ '+(boardData.sections.length+1), desc:'', posts:[]}); render(); save(); };
-window.saveName = (i,t) => { boardData.sections[i].name = t.trim()||'ส่วนที่ '+(i+1); save(); };
-window.saveDesc = (i,t) => { boardData.sections[i].desc = t.trim(); save(); };
 let pendingAttachments = [];
 function renderChips(){
     const c = document.getElementById('attachChips');
@@ -579,7 +529,8 @@ window.openPost = (i) => {
     document.getElementById('modalPost').classList.add('active');
 };
 window.editPost = (si, pi) => {
-    const p = boardData.sections[si].posts[pi];
+    const cls = boardData.classrooms[activeClassroomIndex];
+    const p = cls.assignments[si].posts[pi];
     curIdx = si; editPostIdx = pi;
     pendingAttachments = p.attachments ? [...p.attachments] : [];
     document.getElementById('postTitle').value = p.title || '';
@@ -592,18 +543,24 @@ window.closeModal = (id) => document.getElementById(id).classList.remove('active
 window.savePost = () => {
     const t = document.getElementById('postTitle').value.trim(); if(!t){ showToast('กรุณากรอกชื่อเรื่อง','fas fa-exclamation-circle'); return; }
     const postObj = { title: t, desc: document.getElementById('postDesc').value.trim(), attachments: [...pendingAttachments] };
-    if(!boardData.sections[curIdx].posts) boardData.sections[curIdx].posts=[];
+    const cls = boardData.classrooms[activeClassroomIndex];
+    if(!cls.assignments[curIdx].posts) cls.assignments[curIdx].posts=[];
+    
     if(editPostIdx !== null){
-        boardData.sections[curIdx].posts[editPostIdx] = postObj;
+        cls.assignments[curIdx].posts[editPostIdx] = postObj;
         showToast('บันทึกการแก้ไขแล้ว!');
     } else {
-        boardData.sections[curIdx].posts.push(postObj);
+        cls.assignments[curIdx].posts.push(postObj);
         showToast('เพิ่มโพสต์สำเร็จ!');
     }
-    closeModal('modalPost'); render(); save();
+    closeModal('modalPost'); 
+    save(); // Since we use onValue, render() will be called automatically, but save() triggers Firebase update
 };
-window.delSec = (i) => { boardData.sections.splice(i,1); if(!boardData.sections.length) boardData.sections.push({id:Date.now(), name:'ส่วนที่ 1', desc:'', posts:[]}); render(); save(); };
-window.delPost = (si,pi) => { boardData.sections[si].posts.splice(pi,1); render(); save(); };
+window.delPost = (si,pi) => { 
+    const cls = boardData.classrooms[activeClassroomIndex];
+    cls.assignments[si].posts.splice(pi,1); 
+    save(); 
+};
 window.viewImg = (src) => {
     const ov = document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(6px)';
@@ -611,32 +568,10 @@ window.viewImg = (src) => {
     ov.onclick=()=>ov.remove(); document.body.appendChild(ov);
 };
 window.askDel = (msg,ok) => { document.getElementById('confirmText').innerText = msg; document.getElementById('confirmOkBtn').onclick = () => { ok(); closeModal('modalConfirm'); }; document.getElementById('modalConfirm').classList.add('active'); };
-window.openCtx = (e,i) => {
-    e.stopPropagation(); ctxIdx = i;
-    const m = document.getElementById('ctxMenu');
-    m.style.visibility = 'hidden'; m.classList.add('show');
-    const mw = m.offsetWidth, mh = m.offsetHeight;
-    const x = (e.clientX + mw > window.innerWidth) ? window.innerWidth - mw - 8 : e.clientX;
-    const y = (e.clientY + mh > window.innerHeight) ? window.innerHeight - mh - 8 : e.clientY;
-    m.style.top = y + 'px'; m.style.left = x + 'px';
-    m.style.visibility = 'visible';
-};
-window.ctxAction = (a) => {
-    document.getElementById('ctxMenu').classList.remove('show');
-    const i = ctxIdx;
-    if(a==='write'){ const el = document.querySelectorAll('.section-desc')[i]; if(el) el.focus(); }
-    else if(a==='addpost'){ window.openPost(i); }
-    else if(a==='rename'){ const el = document.querySelectorAll('.section-name span[contenteditable]')[i]; if(el) el.focus(); }
-    else if(a==='cloneSection'){ const clone = JSON.parse(JSON.stringify(boardData.sections[i])); clone.id = Date.now(); clone.name += ' (สำเนา)'; boardData.sections.splice(i+1,0,clone); render(); save(); showToast('คัดลอกส่วนแล้ว'); }
-    else if(a==='clear'){ boardData.sections[i].desc=''; boardData.sections[i].posts=[]; render(); save(); showToast('ล้างเนื้อหาแล้ว'); }
-    else if(a==='copylink'){ navigator.clipboard.writeText(window.location.href).then(()=>showToast('คัดลอกลิงก์แชร์แล้ว','fas fa-link')); }
-    else if(a==='delete'){ window.askDel('ลบส่วนนี้ทั้งหมดหรือไม่?', ()=>{ window.delSec(i); }); }
-};
-document.addEventListener('click',()=>document.getElementById('ctxMenu').classList.remove('show'));
 function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function showToast(msg, icon='fas fa-check-circle'){ const t=document.createElement('div'); t.className='toast'; t.innerHTML=`<i class="${icon}"></i>${msg}`; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); },2500); }
 window.onload = () => {
-    renderBoardList();
+    initRealtimeBoards();
     const h = window.location.hash.substring(1);
     if(h.startsWith('B-')) load(h);
 };
