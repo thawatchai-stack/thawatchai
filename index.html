@@ -66,13 +66,6 @@ textarea.input{min-height:80px;resize:vertical}
 .board-header{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;flex-wrap:wrap;gap:12px}
 .board-title{font-size:1.5rem;font-weight:600;display:flex;align-items:center;gap:10px}
 .board-title i{color:var(--primary-light)}
-
-/* Classroom Tabs */
-.classroom-tabs {display:flex; gap:12px; overflow-x:auto; padding:0 32px 16px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:20px;}
-.classroom-tab {padding:10px 20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; cursor:pointer; white-space:nowrap; transition:all .2s; display:flex; align-items:center; gap:10px; font-weight:500; font-family:inherit; color:var(--text);}
-.classroom-tab:hover {background:rgba(255,255,255,0.08);}
-.classroom-tab.active {background:linear-gradient(135deg,rgba(20,184,166,0.15),rgba(99,102,241,0.15)); border-color:var(--primary-light); color:var(--primary-light);}
-
 .board-body{padding:0 32px 40px;max-width:1200px;margin:0 auto}
 /* Sections */
 .sections-container{display:flex;gap:24px;align-items:flex-start}
@@ -205,10 +198,6 @@ textarea.input{min-height:80px;resize:vertical}
 <div class="board-title"><i class="fas fa-chalkboard"></i><span id="boardTitleText"></span></div>
 <div id="boardControls"></div>
 </div>
-
-<!-- Classroom Tabs -->
-<div class="classroom-tabs" id="studentClassroomTabs"></div>
-
 <div class="board-body">
 <div id="sectionsContainer" class="sections-container"></div>
 </div>
@@ -269,6 +258,7 @@ textarea.input{min-height:80px;resize:vertical}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -283,45 +273,41 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getDatabase(app);
-let boardId = null, boardData = {name:'', classrooms:[]}, tpl = 'wall', curIdx = null, activeClassroomIndex = 0;
+
+// Initialize Firebase Auth
+let isAuthReady = false;
+signInAnonymously(auth).then(() => {
+    console.log("🔐 Authenticated Anonymously");
+    isAuthReady = true;
+    window.dispatchEvent(new Event('firebase-ready'));
+}).catch(err => {
+    console.error("❌ Auth Error:", err);
+    showToast("ข้อผิดพลาดความปลอดภัย: " + err.message, "fas fa-shield-alt");
+});
+let boardId = null, boardData = {name:'', sections:[]}, tpl = 'wall', curIdx = null, ctxIdx = null;
 
 async function save(){ 
     if(boardId) {
         await set(ref(db, 'boards/'+boardId), boardData); 
-        await set(ref(db, 'boards_index/'+boardId), { 
-            name: boardData.name, 
-            ts: Date.now(), 
-            tpl: boardData.tpl || 'wall',
-            createdBy: boardData.createdBy || null
-        });
+        await set(ref(db, 'boards_index/'+boardId), { name: boardData.name, ts: Date.now(), tpl: boardData.tpl || 'wall' });
     }
 }
-
 async function load(id){
     document.getElementById('loadingOverlay').classList.add('active');
     
-    // Listen for realtime updates on this specific board instead of just get()
-    onValue(ref(db, 'boards/'+id), (snap) => {
+    // Ensure auth is ready
+    if(!isAuthReady){
+        window.addEventListener('firebase-ready', () => load(id), { once: true });
+        return;
+    }
+
+    try {
+        const snap = await get(ref(db, 'boards/'+id));
         if(snap.exists()){
-            boardId = id; 
-            boardData = snap.val(); 
-            tpl = boardData.tpl || 'wall';
-            
-            // Migrate old data on the fly
-            if(boardData.sections && !boardData.classrooms) {
-                boardData.classrooms = [{
-                    id: Date.now(),
-                    name: 'ห้องเรียนรวม',
-                    assignments: boardData.sections
-                }];
-                // We don't delete sections from db here since it's a readonly listener usually, but we modify our local object.
-                delete boardData.sections;
-            }
-            if(!boardData.classrooms) boardData.classrooms = [];
-            
-            render(); 
-            showPage('pageBoard');
+            boardId = id; boardData = snap.val(); tpl = boardData.tpl || 'wall';
+            render(); showPage('pageBoard');
             document.getElementById('headerActions').innerHTML = `
                 <button class="btn btn-glass btn-sm" onclick="shareBoard()"><i class="fas fa-share-alt"></i> แชร์</button>
                 <button class="btn btn-glass btn-sm" onclick="goHome()"><i class="fas fa-home"></i> หน้าหลัก</button>
@@ -329,46 +315,21 @@ async function load(id){
         } else {
             showToast('ไม่พบบอร์ดนี้ในระบบ','fas fa-exclamation-triangle');
             window.location.hash = '';
-            goHome();
         }
+    } catch (error) {
+        console.error("❌ Load Error:", error);
+        showToast('ไม่สามารถโหลดข้อมูลได้: ' + error.message, 'fas fa-exclamation-triangle');
+    } finally {
         document.getElementById('loadingOverlay').classList.remove('active');
-    });
+    }
 }
-
-window.selectStudentClassroom = (i) => {
-    activeClassroomIndex = i;
-    render();
-};
 
 function render(){
     document.getElementById('boardTitleText').textContent = boardData.name;
-    
-    // Render Classroom Tabs
-    const tabsContainer = document.getElementById('studentClassroomTabs');
-    tabsContainer.innerHTML = (boardData.classrooms || []).map((c, i) => `
-        <button class="classroom-tab ${i === activeClassroomIndex ? 'active' : ''}" onclick="selectStudentClassroom(${i})">
-            <i class="fas fa-users"></i> ${c.name}
-        </button>
-    `).join('');
-
     const c = document.getElementById('sectionsContainer');
     c.className = 'sections-container layout-'+tpl;
     c.innerHTML = '';
-    
-    if(!boardData.classrooms || boardData.classrooms.length === 0) {
-        c.innerHTML = '<div style="color:var(--text2);padding:20px;">บอร์ดนี้ยังไม่มีห้องเรียนและงาน</div>';
-        return;
-    }
-    
-    if(activeClassroomIndex >= boardData.classrooms.length) activeClassroomIndex = 0;
-    const activeClassroom = boardData.classrooms[activeClassroomIndex];
-    
-    if(!activeClassroom.assignments || activeClassroom.assignments.length === 0) {
-        c.innerHTML = '<div style="color:var(--text2);padding:20px;">ห้องเรียนนี้ยังไม่มีงานมอบหมาย</div>';
-        return;
-    }
-    
-    activeClassroom.assignments.forEach((s,i)=>{
+    boardData.sections.forEach((s,i)=>{
         const div = document.createElement('div'); div.className = 'section';
         const postsHTML = s.posts ? s.posts.map((p,pi)=>{
             const imgAttach = p.attachments ? p.attachments.filter(a=>a.dataUrl) : [];
@@ -379,34 +340,24 @@ function render(){
             const chipsHTML = fileAttach.length
                 ? `<div class="post-chips">${fileAttach.map(a=>`<span class="chip"><i class="fas fa-${a.icon}"></i>${a.name}</span>`).join('')}</div>`
                 : '';
-            const isGraded = p.isGraded === true;
-            const badgeHTML = isGraded 
-                ? `<span style="background:rgba(20,184,166,0.15);color:var(--primary-light);border:1px solid rgba(20,184,166,0.3);padding:2px 8px;border-radius:12px;font-size:0.75rem;margin-bottom:8px;display:inline-block;"><i class="fas fa-check-double"></i> ตรวจแล้ว</span>`
-                : `<span style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);padding:2px 8px;border-radius:12px;font-size:0.75rem;margin-bottom:8px;display:inline-block;"><i class="fas fa-hourglass-half"></i> กำลังรอตรวจ</span>`;
-                
-            const actionsHTML = isGraded 
-                ? '' 
-                : `<div class="post-actions">
-                    <button class="icon-btn" title="แก้ไข" onclick="editPost(${i},${pi})"><i class="fas fa-pen" style="color:#94a3b8"></i></button>
-                    <button class="icon-btn" onclick="askDel('ลบโพสต์?',()=>delPost(${i},${pi}))"><i class="fas fa-trash-alt" style="color:#f87171"></i></button>
-                </div>`;
-                
             return `<div class="post">
-                ${badgeHTML}
                 <div class="post-title"><i class="fas fa-file-alt" style="color:var(--accent);font-size:.8rem"></i>${p.title}</div>
                 ${p.desc ? `<div class="post-meta">${p.desc}</div>` : ''}
                 ${imagesHTML}${chipsHTML}
-                ${actionsHTML}
+                <div class="post-actions">
+                    <button class="icon-btn" title="แก้ไข" onclick="editPost(${i},${pi})"><i class="fas fa-pen" style="color:#94a3b8"></i></button>
+                    <button class="icon-btn" onclick="askDel('ลบโพสต์?',()=>delPost(${i},${pi}))"><i class="fas fa-trash-alt" style="color:#f87171"></i></button>
+                </div>
             </div>`;
         }).join('') : '';
         div.innerHTML = `
         <div class="section-header">
-            <div class="section-name"><i class="fas fa-tasks"></i><span>${s.name}</span></div>
+            <div class="section-name"><i class="fas fa-bookmark"></i><span>${s.name}</span></div>
         </div>
         <div class="section-body">
             ${s.desc ? `<div class="section-desc">${s.desc}</div>` : ''}
             <div class="posts">${postsHTML}</div>
-            <button class="add-post-btn" onclick="openPost(${i})"><i class="fas fa-plus"></i>ส่งงาน</button>
+            <button class="add-post-btn" onclick="openPost(${i})"><i class="fas fa-plus"></i>เพิ่มโพสต์</button>
         </div>`;
         c.appendChild(div);
     });
@@ -444,6 +395,9 @@ window.shareBoard = () => {
         .catch(() => showToast('ไม่สามารถคัดลอกลิงก์ได้', 'fas fa-times-circle'));
 };
 window.goHome = () => { window.location.hash = ''; renderBoardList(); showPage('pageLanding'); document.getElementById('headerActions').innerHTML=''; };
+window.addSection = () => { boardData.sections.push({id:Date.now(), name:'ส่วนที่ '+(boardData.sections.length+1), desc:'', posts:[]}); render(); save(); };
+window.saveName = (i,t) => { boardData.sections[i].name = t.trim()||'ส่วนที่ '+(i+1); save(); };
+window.saveDesc = (i,t) => { boardData.sections[i].desc = t.trim(); save(); };
 let pendingAttachments = [];
 function renderChips(){
     const c = document.getElementById('attachChips');
@@ -529,8 +483,7 @@ window.openPost = (i) => {
     document.getElementById('modalPost').classList.add('active');
 };
 window.editPost = (si, pi) => {
-    const cls = boardData.classrooms[activeClassroomIndex];
-    const p = cls.assignments[si].posts[pi];
+    const p = boardData.sections[si].posts[pi];
     curIdx = si; editPostIdx = pi;
     pendingAttachments = p.attachments ? [...p.attachments] : [];
     document.getElementById('postTitle').value = p.title || '';
@@ -543,24 +496,17 @@ window.closeModal = (id) => document.getElementById(id).classList.remove('active
 window.savePost = () => {
     const t = document.getElementById('postTitle').value.trim(); if(!t){ showToast('กรุณากรอกชื่อเรื่อง','fas fa-exclamation-circle'); return; }
     const postObj = { title: t, desc: document.getElementById('postDesc').value.trim(), attachments: [...pendingAttachments] };
-    const cls = boardData.classrooms[activeClassroomIndex];
-    if(!cls.assignments[curIdx].posts) cls.assignments[curIdx].posts=[];
-    
+    if(!boardData.sections[curIdx].posts) boardData.sections[curIdx].posts=[];
     if(editPostIdx !== null){
-        cls.assignments[curIdx].posts[editPostIdx] = postObj;
+        boardData.sections[curIdx].posts[editPostIdx] = postObj;
         showToast('บันทึกการแก้ไขแล้ว!');
     } else {
-        cls.assignments[curIdx].posts.push(postObj);
+        boardData.sections[curIdx].posts.push(postObj);
         showToast('เพิ่มโพสต์สำเร็จ!');
     }
-    closeModal('modalPost'); 
-    save(); // Since we use onValue, render() will be called automatically, but save() triggers Firebase update
+    closeModal('modalPost'); render(); save();
 };
-window.delPost = (si,pi) => { 
-    const cls = boardData.classrooms[activeClassroomIndex];
-    cls.assignments[si].posts.splice(pi,1); 
-    save(); 
-};
+window.delPost = (si,pi) => { boardData.sections[si].posts.splice(pi,1); render(); save(); };
 window.viewImg = (src) => {
     const ov = document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(6px)';
