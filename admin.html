@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher Admin - Thawatchai Board</title>
+<title>Teacher Admin - Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
@@ -15,7 +15,7 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
 .app{position:relative;z-index:1;min-height:100vh;display:flex}
 
 /* Login Page */
-#loginPage {position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(10,15,30,0.9);backdrop-filter:blur(10px);transition:all 0.3s;}
+#loginPage {position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(10,15,30,0.9);backdrop-filter:blur(10px);transition:all 0.3s;}
 .login-card {background:var(--glass);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow);}
 .login-card h2 {margin-bottom:20px;font-size:1.8rem;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .form-group {margin-bottom:16px;text-align:left;}
@@ -32,7 +32,8 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
 .btn-sm {padding:8px 16px;font-size:.85rem;}
 
 /* Dashboard Layout */
-.sidebar {width:260px;background:var(--glass);border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;backdrop-filter:blur(20px);}
+.sidebar {width:260px;background:var(--glass);border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;backdrop-filter:blur(20px);transition:all 0.3s ease;overflow:hidden;white-space:nowrap;z-index:100;}
+.sidebar.collapsed { width: 0; padding: 0; border-right: none; }
 .sidebar-header {padding:24px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:12px;font-size:1.2rem;font-weight:700;}
 .sidebar-header i {color:var(--primary-light);font-size:1.5rem;}
 .sidebar-nav {padding:20px 12px;flex:1;}
@@ -41,8 +42,9 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
 .nav-item.active {background:linear-gradient(135deg,rgba(20,184,166,0.15),rgba(99,102,241,0.15));color:var(--primary-light);border-left:3px solid var(--primary-light);}
 .sidebar-footer {padding:20px;border-top:1px solid rgba(255,255,255,0.08);}
 
-.main-content {flex:1;display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
-.header {padding:20px 40px;background:rgba(15,23,42,0.4);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;}
+.main-content {flex:1;display:flex;flex-direction:column;height:100vh;overflow-y:auto;position:relative;}
+.header {padding:20px 30px;background:rgba(15,23,42,0.4);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.header-left {display:flex;align-items:center;gap:16px;}
 .page-title {font-size:1.4rem;font-weight:600;}
 .content-body {padding:40px;flex:1;}
 
@@ -73,89 +75,106 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
 .modal h3 {font-size:1.3rem;margin-bottom:20px;}
 .modal-actions {display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
 
+/* Classroom Tabs */
+.classroom-tabs {display:flex;gap:8px;overflow-x:auto;padding:12px 32px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:20px;}
+.classroom-tab {padding:8px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:20px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px;transition:all .2s;}
+.classroom-tab.active {background:var(--primary);color:#fff;border-color:var(--primary-light);}
+.classroom-tab .del-btn {color:rgba(255,255,255,0.4);font-size:0.8rem;transition:color .2s;}
+.classroom-tab .del-btn:hover {color:#f87171;}
+
+/* Review Section */
+.review-board-card {background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;cursor:pointer;transition:all .3s;}
+.review-board-card:hover {border-color:var(--primary-light);transform:translateY(-3px);}
+.pending-badge {font-size:0.75rem;padding:2px 10px;border-radius:12px;font-weight:600;}
+.pending-badge.has-pending {background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);}
+.pending-badge.all-done {background:rgba(20,184,166,0.15);color:var(--primary-light);border:1px solid rgba(20,184,166,0.3);}
+
+/* Template selection */
+.template-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:8px;}
+.template-card {background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;}
+.template-card.selected {border-color:var(--primary-light);box-shadow:0 0 0 2px var(--primary-light);background:rgba(20,184,166,0.1);}
+.template-icon {font-size:1.8rem;margin-bottom:8px;color:var(--primary-light);}
+
+/* Mobile Sidebar */
+@media (max-width: 768px) {
+    .sidebar { position: fixed; height: 100%; top: 0; left: 0; width: 260px; transform: translateX(0); }
+    .sidebar.collapsed { transform: translateX(-100%); width: 260px; padding: 0; }
+}
+
 /* Toast */
 .toast {position:fixed;bottom:30px;right:30px;padding:14px 24px;background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:.9rem;z-index:300;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);animation:slideInToast .3s ease;}
 .toast i {color:var(--primary-light)}
 @keyframes slideInToast{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
-/* Utility */
-.flex-between {display:flex;justify-content:space-between;align-items:center;}
-
-/* Template Selection */
-.template-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:8px;}
-.template-card {background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;}
-.template-card:hover {background:rgba(255,255,255,0.1);border-color:var(--primary-light);}
-.template-card.selected {border-color:var(--primary-light);box-shadow:0 0 0 2px var(--primary-light);background:rgba(20,184,166,0.1);}
-.template-icon {font-size:1.8rem;margin-bottom:8px;color:var(--primary-light);}
-.template-card h3 {font-size:0.95rem;margin-bottom:4px;}
-.template-card p {font-size:0.75rem;color:var(--text2);}
-
-/* Board Editor View (copied from index) */
-.board-header{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;flex-wrap:wrap;gap:12px}
-.board-title{font-size:1.5rem;font-weight:600;display:flex;align-items:center;gap:10px}
-.board-title i{color:var(--primary-light)}
-.board-body{padding:0 32px 40px;max-width:1200px;margin:0 auto}
-.sections-container{display:flex;gap:24px;align-items:flex-start}
-.sections-container.layout-wall{flex-wrap:wrap}
-.sections-container.layout-column{flex-wrap:nowrap;overflow-x:auto;padding-bottom:16px}
-.sections-container.layout-timeline{flex-direction:column;position:relative;padding-left:40px}
-.sections-container.layout-timeline::before{content:'';position:absolute;left:16px;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--primary-light),var(--accent));border-radius:3px}
-.section{width:350px;max-width:90vw;flex:0 0 auto;background:var(--glass);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);overflow:hidden;transition:all .3s}
-.sections-container.layout-timeline .section{position:relative}
-.sections-container.layout-timeline .section::before{content:'';position:absolute;left:-32px;top:28px;width:14px;height:14px;background:var(--primary-light);border-radius:50%;border:3px solid var(--dark);z-index:1}
-.section:hover{border-color:rgba(255,255,255,0.15)}
-.section-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06)}
-.section-name{font-weight:600;font-size:1.05rem;display:flex;align-items:center;transition:all .2s;color:var(--primary-light);outline:none;border-radius:6px;padding:2px 6px}
-.section-name:hover{background:rgba(255,255,255,0.05)}
-.section-name i:first-child{margin-right:8px;font-size:.9rem}
-.section-actions{display:flex;gap:4px}
-.icon-btn{width:34px;height:34px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s}
-.icon-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
-.section-body{padding:16px 20px}
-.section-desc{color:var(--text);font-size:.9rem;margin-bottom:14px;min-height:40px;padding:10px;border-radius:8px;cursor:text;transition:background .2s;white-space:pre-wrap;border:1px solid transparent}
-.section-desc:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.05)}
-.section-desc[contenteditable=true]:focus{outline:none;background:rgba(255,255,255,0.06);border-color:var(--primary-light)}
-.section-desc:empty::before{content:attr(data-placeholder);color:var(--text2);font-style:italic}
-.add-section-btn{width:100%;max-width:400px;margin:0 auto;padding:16px;border:2px dashed rgba(255,255,255,0.1);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;font-size:1rem;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px}
-.add-section-btn:hover{border-color:var(--primary-light);color:var(--primary-light);background:rgba(20,184,166,0.05)}
-
-/* Context Menu */
-.ctx-menu{position:fixed;z-index:200;background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:6px;min-width:200px;box-shadow:var(--shadow);display:none}
-.ctx-menu.show{display:block}
-.ctx-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .15s;color:var(--text);border:none;background:none;width:100%;font-family:inherit;text-align:left}
-.ctx-item:hover{background:rgba(255,255,255,0.08)}
-.ctx-item i{width:18px;text-align:center;color:var(--primary-light)}
+/* Sidebar Badge */
+.nav-item { position: relative; }
+.sidebar-badge {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fbbf24;
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(251,191,36,0.3);
+}
+.classroom-tab { position: relative; padding-right: 35px !important; }
+.tab-badge {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background: rgba(251,191,36,0.2);
+    color: #fbbf24;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content:center;
+    font-weight: 700;
+}
+.classroom-tab.active .tab-badge {
+    background: #fff;
+    color: var(--primary);
+}
 </style>
 </head>
 <body>
 <div class="bg-fixed"></div>
 
-<!-- Login Screen -->
 <div id="loginPage">
     <div class="login-card">
         <h2><i class="fas fa-lock"></i> Teacher Admin</h2>
         <p style="color:var(--text2);margin-bottom:24px;font-size:0.9rem;">เข้าสู่ระบบเพื่อจัดการกระดานทั้งหมด</p>
         <div class="form-group">
             <label>ชื่อผู้ใช้งาน (Username)</label>
-            <input type="text" class="input" id="loginUser" placeholder="admin">
+            <input type="text" class="input" id="loginUser" placeholder="admin" onkeypress="if(event.key==='Enter') handleLogin()">
         </div>
         <div class="form-group">
             <label>รหัสผ่าน (Password)</label>
-            <input type="password" class="input" id="loginPass" placeholder="••••••••">
+            <input type="password" class="input" id="loginPass" placeholder="••••••••" onkeypress="if(event.key==='Enter') handleLogin()">
         </div>
         <button class="btn btn-primary" onclick="handleLogin()" style="margin-top:10px;">เข้าสู่ระบบ</button>
     </div>
 </div>
 
 <div class="app" id="adminApp" style="display:none;">
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="fas fa-user-shield"></i> Teacher Admin
         </div>
         <div class="sidebar-nav">
             <div class="nav-item active" onclick="switchView('boards')" id="nav-boards">
                 <i class="fas fa-chalkboard"></i> จัดการบอร์ดทั้งหมด
+            </div>
+            <div class="nav-item" onclick="switchView('review')" id="nav-review">
+                <i class="fas fa-clipboard-check"></i> ตรวจงานนักเรียน
+                <span id="globalPendingBadge" class="sidebar-badge" style="display:none;">0</span>
             </div>
             <div class="nav-item" onclick="switchView('admins')" id="nav-admins">
                 <i class="fas fa-users-cog"></i> จัดการผู้ดูแลระบบ
@@ -166,28 +185,26 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="header">
-            <div class="page-title" id="pageTitleText">จัดการบอร์ดทั้งหมด</div>
+            <div class="header-left">
+                <button class="btn btn-glass btn-sm" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div class="page-title" id="pageTitleText">จัดการบอร์ดทั้งหมด</div>
+            </div>
             <div id="headerActions">
                 <button class="btn btn-primary btn-sm" onclick="openCreateBoardModal()"><i class="fas fa-plus"></i> สร้างบอร์ดใหม่</button>
             </div>
         </div>
         <div class="content-body">
             
-            <!-- View: Boards -->
             <div class="view-section active" id="view-boards">
                 <div class="flex-between">
                     <p style="color:var(--text2)">บอร์ดทั้งหมดในระบบ <span id="boardCountBadge"></span></p>
                     <input type="text" class="input" style="width:250px;padding:8px 16px;" placeholder="ค้นหาชื่อบอร์ด..." id="searchBoard" oninput="renderBoards()">
                 </div>
-                <div class="board-grid" id="boardGrid">
-                    <!-- Boards will be loaded here -->
-                </div>
+                <div class="board-grid" id="boardGrid"></div>
             </div>
 
-            <!-- View: Admins -->
             <div class="view-section" id="view-admins">
                 <div class="flex-between">
                     <p style="color:var(--text2)">รายชื่อผู้ดูแลระบบทั้งหมด</p>
@@ -200,28 +217,30 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
                             <th style="width:150px;text-align:right;">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody id="adminTableBody">
-                        <!-- Admins will be loaded here -->
-                    </tbody>
+                    <tbody id="adminTableBody"></tbody>
                 </table>
             </div>
 
-            <!-- View: Board Editor -->
             <div class="view-section" id="view-board-editor">
-                 <div class="board-header" style="padding:0 0 20px 0;">
-                     <div class="board-title"><i class="fas fa-layer-group"></i> <span id="editorBoardTitleText">โครงสร้างบอร์ด</span></div>
+                 <div class="board-header" style="padding:0 32px 20px 32px;display:flex;justify-content:space-between;align-items:center;">
+                     <div class="page-title" style="font-size:1.2rem;"><i class="fas fa-layer-group"></i> <span id="editorBoardTitleText">โครงสร้างบอร์ด</span></div>
+                     <button class="btn btn-primary btn-sm" style="width:auto;" onclick="addClassroom()"><i class="fas fa-plus"></i> เพิ่มห้องเรียน</button>
                  </div>
-                 <div class="board-body" style="padding:0;max-width:none;">
-                     <div id="sectionsContainer" class="sections-container"></div>
-                     <button class="add-section-btn" onclick="addSection()" style="margin-top:20px;"><i class="fas fa-plus"></i>เพิ่มส่วนใหม่</button>
+                 <div class="classroom-tabs" id="classroomTabs"></div>
+                 <div class="board-body" style="padding:0 32px;max-width:none;">
+                     <div id="sectionsContainer" class="sections-container" style="display:flex;gap:20px;overflow-x:auto;padding-bottom:20px;"></div>
+                     <button class="btn btn-glass" id="btnAddAssignment" onclick="addAssignment()" style="margin-top:20px;border:2px dashed rgba(255,255,255,0.1);"><i class="fas fa-plus"></i> เพิ่มงานใหม่ (Assignment)</button>
                  </div>
+            </div>
+
+            <div class="view-section" id="view-review">
+                <div id="reviewViewContent"></div>
             </div>
 
         </div>
     </div>
 </div>
 
-<!-- Modals -->
 <div class="modal-overlay" id="modalConfirm">
     <div class="modal" style="text-align:center">
         <h3><i class="fas fa-exclamation-triangle" style="color:#f87171"></i> ยืนยันการดำเนินการ</h3>
@@ -234,65 +253,70 @@ body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:#0a0f1e;col
 </div>
 
 <div class="modal-overlay" id="modalBoard">
-    <div class="modal" style="max-width:500px">
-        <h3 id="modalBoardTitle"><i class="fas fa-plus"></i> สร้างบอร์ดใหม่</h3>
+    <div class="modal">
+        <h3 id="modalBoardTitle">สร้างบอร์ดใหม่</h3>
         <div class="form-group">
             <label>ชื่อบอร์ด</label>
             <input class="input" id="boardNameInput" placeholder="กรอกชื่อบอร์ด...">
         </div>
         <div class="form-group" id="templateSelectionGroup">
-            <label>เลือกเทมเพลต (รูปแบบการแสดงผล)</label>
+            <label>เลือกเทมเพลต</label>
             <div class="template-grid">
                 <div class="template-card selected" onclick="selectTemplate('wall',this)">
-                    <div class="template-icon"><i class="fas fa-th-large"></i></div>
-                    <h3>วอลล์ (Wall)</h3>
-                    <p>แสดงผลแบบกริดอิสระ</p>
+                    <i class="fas fa-th-large template-icon"></i>
+                    <h3>Wall</h3>
                 </div>
                 <div class="template-card" onclick="selectTemplate('column',this)">
-                    <div class="template-icon"><i class="fas fa-columns"></i></div>
-                    <h3>คอลัมน์ (Column)</h3>
-                    <p>จัดกลุ่มตามหัวข้อ</p>
-                </div>
-                <div class="template-card" onclick="selectTemplate('timeline',this)">
-                    <div class="template-icon"><i class="fas fa-stream"></i></div>
-                    <h3>ไทม์ไลน์ (Timeline)</h3>
-                    <p>แสดงผลลำดับเวลา</p>
+                    <i class="fas fa-columns template-icon"></i>
+                    <h3>Column</h3>
                 </div>
             </div>
         </div>
         <div class="modal-actions">
             <button class="btn btn-glass btn-sm" onclick="closeModal('modalBoard')">ยกเลิก</button>
-            <button class="btn btn-primary btn-sm" id="btnSaveBoard"><i class="fas fa-check"></i> บันทึก</button>
+            <button class="btn btn-primary btn-sm" id="btnSaveBoard">บันทึก</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modalAdmin">
     <div class="modal">
-        <h3><i class="fas fa-user-plus"></i> เพิ่มผู้ดูแลระบบ</h3>
+        <h3>เพิ่มผู้ดูแลระบบ</h3>
         <div class="form-group">
-            <label>ชื่อผู้ใช้งาน (Username)</label>
-            <input class="input" id="adminUserInput" placeholder="ภาษาอังกฤษหรือตัวเลข">
+            <label>ชื่อผู้ใช้งาน</label>
+            <input class="input" id="adminUserInput" placeholder="Username">
         </div>
         <div class="form-group">
-            <label>รหัสผ่าน (Password)</label>
-            <input type="password" class="input" id="adminPassInput" placeholder="อย่างน้อย 4 ตัวอักษร">
+            <label>รหัสผ่าน</label>
+            <input type="password" class="input" id="adminPassInput" placeholder="Password">
         </div>
         <div class="modal-actions">
             <button class="btn btn-glass btn-sm" onclick="closeModal('modalAdmin')">ยกเลิก</button>
-            <button class="btn btn-primary btn-sm" onclick="saveAdmin()"><i class="fas fa-check"></i> บันทึก</button>
+            <button class="btn btn-primary btn-sm" onclick="saveAdmin()">บันทึก</button>
         </div>
     </div>
 </div>
 
-<div class="ctx-menu" id="ctxMenu">
-    <button class="ctx-item" onclick="ctxAction('write')"><i class="fas fa-pen"></i>เขียนเนื้อหา</button>
-    <button class="ctx-item" onclick="ctxAction('rename')"><i class="fas fa-i-cursor"></i>เปลี่ยนชื่อส่วน</button>
-    <button class="ctx-item" onclick="ctxAction('cloneSection')"><i class="fas fa-copy"></i>คัดลอกส่วน</button>
-    <div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0"></div>
-    <button class="ctx-item" onclick="ctxAction('clear')"><i class="fas fa-eraser"></i>ล้างเนื้อหา</button>
-    <div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0"></div>
-    <button class="ctx-item" style="color:#f87171" onclick="ctxAction('delete')"><i class="fas fa-trash-alt" style="color:#f87171"></i>ลบส่วนนี้</button>
+<div class="modal-overlay" id="modalEditClassroom">
+    <div class="modal">
+        <h3>แก้ไขชื่อห้องเรียน</h3>
+        <input class="input" id="classroomNameInput">
+        <div class="modal-actions">
+            <button class="btn btn-glass btn-sm" onclick="closeModal('modalEditClassroom')">ยกเลิก</button>
+            <button class="btn btn-primary btn-sm" onclick="saveEditedClassroomName()">บันทึก</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalReviewPosts">
+    <div class="modal" style="max-width:600px; max-height:85vh; display:flex; flex-direction:column; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0;"><i class="fas fa-search" style="color:var(--primary-light)"></i> ตรวจงานนักเรียน</h3>
+            <button style="background:none; border:none; color:var(--text2); cursor:pointer; font-size:1.2rem;" onclick="closeModal('modalReviewPosts')"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="reviewAssignmentName" style="color:var(--primary-light); font-weight:600; margin-bottom:12px;"></div>
+        <div id="reviewPostsContainer" style="overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
 </div>
 
 <script type="module">
@@ -314,373 +338,412 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// Initialize Firebase Auth
 let isAuthReady = false;
 signInAnonymously(auth).then(() => {
-    console.log("🔐 Authenticated Anonymously");
     isAuthReady = true;
-    window.dispatchEvent(new Event('firebase-ready'));
-}).catch(err => {
-    console.error("❌ Auth Error:", err);
-    showToast("ข้อผิดพลาดความปลอดภัย: " + err.message, "fas fa-shield-alt");
-});
+    console.log("🔐 Authenticated Anonymously");
+}).catch(err => console.error("❌ Auth Error:", err));
 
 let currentUser = null;
 let allBoards = {};
 let allAdmins = {};
 
-// Helper: Show Toast
 function showToast(msg, icon='fas fa-check-circle'){ 
     const t=document.createElement('div'); 
     t.className='toast'; 
     t.innerHTML=`<i class="${icon}"></i> ${msg}`; 
     document.body.appendChild(t); 
-    setTimeout(()=>{ 
-        t.style.opacity='0'; 
-        t.style.transition='opacity .3s'; 
-        setTimeout(()=>t.remove(),300); 
-    },2500); 
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); },2500); 
 }
 
-// Helper: Modal
 window.closeModal = (id) => document.getElementById(id).classList.remove('active');
 window.askConfirm = (msg, okCallback) => {
     document.getElementById('confirmText').innerText = msg;
-    document.getElementById('confirmOkBtn').onclick = () => {
-        okCallback();
-        closeModal('modalConfirm');
-    };
+    document.getElementById('confirmOkBtn').onclick = () => { okCallback(); closeModal('modalConfirm'); };
     document.getElementById('modalConfirm').classList.add('active');
 };
 
-// ---------------- Login System ----------------
 window.handleLogin = async () => {
+    if(!isAuthReady) { showToast('กำลังเชื่อมต่อระบบ...', 'fas fa-spinner fa-spin'); return; }
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
-    if(!user || !pass){ showToast('กรุณากรอกข้อมูลให้ครบ','fas fa-exclamation-circle'); return; }
+    if(!user || !pass) return;
 
-    // Ensure auth is ready
-    if(!isAuthReady){
-        showToast('กำลังเชื่อมต่อระบบความปลอดภัย กรุณารอสักครู่...','fas fa-shield-alt');
-        return;
+    const snap = await get(ref(db, 'admin_users'));
+    if(!snap.exists() && user === 'admin' && pass === 'password'){
+        await set(ref(db, 'admin_users/admin'), { pass: 'password' });
+        loginSuccess(user); return;
     }
-
-    try {
-        const adminRef = ref(db, 'admin_users');
-        const snap = await get(adminRef);
-        
-        // Auto setup default admin if DB is completely empty
-        if(!snap.exists()){
-            if(user === 'admin' && pass === 'password'){
-                await set(ref(db, 'admin_users/admin'), { pass: 'password' });
-                loginSuccess(user);
-                showToast('สร้างบัญชีแอดมินเริ่มต้นให้แล้ว (admin/password)');
-            } else {
-                showToast('ระบบไม่มีข้อมูลแอดมิน กรุณาล็อกอินด้วย admin / password ในครั้งแรก','fas fa-info-circle');
-            }
-            return;
-        }
-
-        const admins = snap.val();
-        if(admins[user] && admins[user].pass === pass){
-            loginSuccess(user);
-        } else {
-            showToast('Username หรือ Password ไม่ถูกต้อง', 'fas fa-times-circle');
-        }
-    } catch (error) {
-        console.error("❌ Login Error:", error);
-        showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + error.message, 'fas fa-exclamation-triangle');
-    }
+    const admins = snap.val() || {};
+    if(admins[user] && admins[user].pass === pass) loginSuccess(user);
+    else showToast('Username หรือ Password ไม่ถูกต้อง', 'fas fa-times-circle');
 };
 
 function loginSuccess(user) {
     currentUser = user;
-    document.getElementById('loginPage').style.opacity = '0';
-    setTimeout(() => {
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('adminApp').style.display = 'flex';
-        initDashboard();
-    }, 300);
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'flex';
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('collapsed');
+    initDashboard();
 }
 
-window.logout = () => {
-    currentUser = null;
-    document.getElementById('adminApp').style.display = 'none';
-    document.getElementById('loginPage').style.display = 'flex';
-    document.getElementById('loginPage').style.opacity = '1';
-    document.getElementById('loginUser').value = '';
-    document.getElementById('loginPass').value = '';
-};
+window.logout = () => location.reload();
 
-// ---------------- Dashboard System ----------------
-window.switchView = (view) => {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('view-'+view).classList.add('active');
-    
-    const navItem = document.getElementById('nav-'+view);
-    if(navItem) navItem.classList.add('active');
-    
-    if(view === 'boards'){
-        document.getElementById('pageTitleText').innerText = 'จัดการบอร์ดทั้งหมด';
-        document.getElementById('headerActions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateBoardModal()"><i class="fas fa-plus"></i> สร้างบอร์ดใหม่</button>`;
-    } else if(view === 'admins'){
-        document.getElementById('pageTitleText').innerText = 'จัดการผู้ดูแลระบบ';
-        document.getElementById('headerActions').innerHTML = '';
-    }
-};
+window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('collapsed');
 
 function initDashboard() {
-    // Listen to Boards Index
     onValue(ref(db, 'boards_index'), (snap) => {
         allBoards = snap.exists() ? snap.val() : {};
         renderBoards();
     });
-
-    // Listen to Admins
+    // Global listener for full boards data to update all badges real-time
+    onValue(ref(db, 'boards'), (snap) => {
+        const allData = snap.val() || {};
+        reviewBoardsData = {};
+        let globalPending = 0;
+        
+        Object.keys(allData).forEach(id => {
+            const bd = allData[id];
+            if(bd.createdBy === currentUser || currentUser === 'admin') {
+                reviewBoardsData[id] = bd;
+                globalPending += getPendingCount(bd);
+            }
+        });
+        
+        const badge = document.getElementById('globalPendingBadge');
+        if(badge) {
+            badge.innerText = globalPending;
+            badge.style.display = globalPending > 0 ? 'block' : 'none';
+        }
+        
+        // Refresh current view if needed
+        const activeView = document.querySelector('.view-section.active').id;
+        if(activeView === 'view-review') {
+            if(reviewCurrentBoardId) renderReviewBoardDetail();
+            else renderReviewBoardList();
+        }
+    });
     onValue(ref(db, 'admin_users'), (snap) => {
         allAdmins = snap.exists() ? snap.val() : {};
         renderAdmins();
     });
 }
 
-// ---------------- Boards Management ----------------
+window.switchView = (view) => {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const viewEl = document.getElementById('view-'+view);
+    const navEl = document.getElementById('nav-'+view);
+    if(viewEl) viewEl.classList.add('active');
+    if(navEl) navEl.classList.add('active');
+    
+    if(view === 'boards'){
+        document.getElementById('pageTitleText').innerText = 'จัดการบอร์ดทั้งหมด';
+        document.getElementById('headerActions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateBoardModal()"><i class="fas fa-plus"></i> สร้างบอร์ดใหม่</button>`;
+    } else if(view === 'review'){
+        document.getElementById('pageTitleText').innerText = 'ตรวจงานนักเรียน';
+        document.getElementById('headerActions').innerHTML = `<button class="btn btn-glass btn-sm" onclick="loadReviewBoards()"><i class="fas fa-sync-alt"></i> รีเฟรช</button>`;
+        loadReviewBoards();
+    } else if(view === 'admins'){
+        document.getElementById('pageTitleText').innerText = 'จัดการผู้ดูแลระบบ';
+        document.getElementById('headerActions').innerHTML = '';
+    } else if(view === 'board-editor'){
+        document.getElementById('headerActions').innerHTML = `<button class="btn btn-glass btn-sm" onclick="switchView('boards')"><i class="fas fa-arrow-left"></i> กลับ</button>`;
+    }
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('collapsed');
+};
+
 window.renderBoards = () => {
     const grid = document.getElementById('boardGrid');
     const search = document.getElementById('searchBoard').value.toLowerCase();
+    let list = Object.keys(allBoards).map(id => ({ id, ...allBoards[id] }));
     
-    let boardList = Object.keys(allBoards).map(id => ({ id, ...allBoards[id] }));
-    boardList.sort((a,b) => (b.ts || 0) - (a.ts || 0)); // Sort newest first
-    
-    if(search) {
-        boardList = boardList.filter(b => b.name.toLowerCase().includes(search));
+    // Filter boards: standard users see only theirs, admin sees all
+    if(currentUser !== 'admin') {
+        list = list.filter(b => b.createdBy === currentUser);
     }
     
-    document.getElementById('boardCountBadge').innerText = `(${boardList.length})`;
+    list.sort((a,b) => (b.ts || 0) - (a.ts || 0));
+    if(search) list = list.filter(b => b.name.toLowerCase().includes(search));
+    
+    document.getElementById('boardCountBadge').innerText = `(${list.length})`;
 
-    if(boardList.length === 0){
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text2)">ไม่พบบอร์ด</div>`;
-        return;
+    grid.innerHTML = list.map(b => {
+        const isOwner = b.createdBy === currentUser || currentUser === 'admin';
+        const canEdit = b.createdBy === currentUser;
+        const ownerBadge = b.createdBy && currentUser === 'admin' ? `<span style="font-size:0.7rem;color:var(--text2);display:block;margin-top:4px;">เจ้าของ: ${b.createdBy}</span>` : '';
+        const borderStyle = canEdit ? '' : 'border: 1px solid #fbbf24; box-shadow: 0 0 10px rgba(251,191,36,0.1);';
+        
+        let actionBtns = '';
+        // Admin can manage boards without owner (legacy) or their own boards
+        const canManage = b.createdBy === currentUser || (currentUser === 'admin' && (!b.createdBy || b.createdBy === 'admin'));
+        
+        if(canManage) {
+            actionBtns = `
+                <button class="btn btn-glass btn-sm" style="flex:1" onclick="editBoardLayout('${b.id}')"><i class="fas fa-layer-group"></i> จัดการ</button>
+                <button class="btn btn-glass btn-sm" onclick="openBoardInApp('${b.id}')"><i class="fas fa-external-link-alt"></i></button>
+                <button class="btn btn-glass btn-sm" onclick="openEditBoardModal('${b.id}', '${b.name}')"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteBoard('${b.id}')"><i class="fas fa-trash-alt"></i></button>`;
+        } else {
+            actionBtns = `<button class="btn btn-glass btn-sm" style="flex:1; border-color:#fbbf24; color:#fbbf24;" onclick="viewBoardOnly('${b.id}')"><i class="fas fa-eye"></i> ดูอย่างเดียว (Admin)</button>`;
+        }
+
+        return `<div class="board-card" style="${borderStyle}">
+            <div class="board-card-title">${b.name}</div>
+            <div class="board-card-meta"><i class="fas fa-clock"></i> ${new Date(b.ts).toLocaleDateString('th-TH')} ${ownerBadge}</div>
+            <div class="board-actions">${actionBtns}</div>
+        </div>`;
+    }).join('');
+};
+
+window.openBoardInApp = (id) => window.open(`index.html#${id}`, '_blank');
+window.viewBoardOnly = (id) => window.open(`index.html#${id}`, '_blank');
+
+let activeEditorBoardId = null, activeEditorBoardData = null, activeClassroomIndex = 0;
+
+window.editBoardLayout = async (id) => {
+    activeEditorBoardId = id; 
+    const snap = await get(ref(db, 'boards/'+id));
+    if(snap.exists()){
+        activeEditorBoardData = snap.val();
+        if(!activeEditorBoardData.classrooms) activeEditorBoardData.classrooms = [{id:Date.now(), name:'ห้องเรียน 1', assignments:[]}];
+        activeClassroomIndex = 0; 
+        switchView('board-editor');
+        document.getElementById('pageTitleText').innerText = 'จัดการ: ' + activeEditorBoardData.name;
+        renderEditor();
     }
+};
 
-    grid.innerHTML = boardList.map(b => {
-        const dateStr = b.ts ? new Date(b.ts).toLocaleString('th-TH') : '-';
-        return `
-        <div class="board-card">
-            <div class="board-card-title"><i class="fas fa-chalkboard"></i> ${b.name}</div>
-            <div class="board-card-meta"><i class="fas fa-clock"></i> อัปเดตเมื่อ: ${dateStr}</div>
-            <div class="board-actions">
-                <button class="btn btn-glass btn-sm" style="flex:1" onclick="editBoardLayout('${b.id}')"><i class="fas fa-layer-group"></i> จัดการส่วน</button>
-                <button class="btn btn-glass btn-sm" onclick="openBoardInApp('${b.id}')" title="เปิดดูบอร์ด"><i class="fas fa-external-link-alt"></i></button>
-                <button class="btn btn-glass btn-sm" onclick="openEditBoardModal('${b.id}', '${b.name.replace(/'/g,"\\'")}')" title="เปลี่ยนชื่อ"><i class="fas fa-pen"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteBoard('${b.id}')" title="ลบบอร์ด"><i class="fas fa-trash-alt"></i></button>
+async function saveEditor() { await set(ref(db, 'boards/'+activeEditorBoardId), activeEditorBoardData); }
+
+function renderEditor(){
+    const tabs = document.getElementById('classroomTabs');
+    tabs.innerHTML = activeEditorBoardData.classrooms.map((c, i) => `
+        <div class="classroom-tab ${i === activeClassroomIndex ? 'active' : ''}" onclick="selectClassroom(${i})">
+            <span>${c.name}</span>
+            <i class="fas fa-pencil-alt" style="font-size:0.8rem;cursor:pointer;" onclick="event.stopPropagation(); editClassroomName(${i})"></i>
+            <i class="fas fa-times del-btn" onclick="event.stopPropagation(); askConfirm('ลบห้องนี้?', ()=>delClassroom(${i}))"></i>
+        </div>`).join('');
+
+    const c = document.getElementById('sectionsContainer');
+    const activeCls = activeEditorBoardData.classrooms[activeClassroomIndex] || {assignments:[]};
+    c.innerHTML = (activeCls.assignments || []).map((s,i) => `
+        <div class="section" style="background:var(--glass2);border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:300px;flex-shrink:0;padding:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                <span contenteditable="true" onblur="saveAsgnName(${i},this.innerText)" style="font-weight:600;color:var(--primary-light)">${s.name}</span>
+                <i class="fas fa-trash-alt" style="color:#f87171;cursor:pointer;" onclick="delAssignment(${i})"></i>
+            </div>
+            <div contenteditable="true" onblur="saveAsgnDesc(${i},this.innerText)" style="font-size:0.85rem;color:var(--text2);margin-bottom:12px;">${s.desc||'รายละเอียด...'}</div>
+            <button class="btn btn-glass btn-sm" style="width:100%" onclick="openReviewModal(${i})">ตรวจงาน (${s.posts?s.posts.length:0})</button>
+        </div>`).join('');
+}
+
+window.selectClassroom = (i) => { activeClassroomIndex = i; renderEditor(); };
+window.addClassroom = () => { activeEditorBoardData.classrooms.push({id:Date.now(), name:'ปวช.'+(activeEditorBoardData.classrooms.length+1), assignments:[]}); saveEditor(); renderEditor(); };
+window.delClassroom = (i) => { activeEditorBoardData.classrooms.splice(i,1); saveEditor(); renderEditor(); };
+window.editClassroomName = (i) => { 
+    const n = prompt('ชื่อห้องเรียน:', activeEditorBoardData.classrooms[i].name);
+    if(n) { activeEditorBoardData.classrooms[i].name = n; saveEditor(); renderEditor(); }
+};
+
+window.addAssignment = () => { 
+    const cls = activeEditorBoardData.classrooms[activeClassroomIndex];
+    if(!cls.assignments) cls.assignments = [];
+    cls.assignments.push({id:Date.now(), name:'งาน '+(cls.assignments.length+1), desc:''});
+    saveEditor(); renderEditor();
+};
+window.saveAsgnName = (i,t) => { activeEditorBoardData.classrooms[activeClassroomIndex].assignments[i].name = t; saveEditor(); };
+window.saveAsgnDesc = (i,t) => { activeEditorBoardData.classrooms[activeClassroomIndex].assignments[i].desc = t; saveEditor(); };
+window.delAssignment = (i) => { activeEditorBoardData.classrooms[activeClassroomIndex].assignments.splice(i,1); saveEditor(); renderEditor(); };
+
+// Review Modal
+let activeReviewAssignmentIndex = null;
+window.openReviewModal = (si) => {
+    activeReviewAssignmentIndex = si;
+    const cls = activeEditorBoardData.classrooms[activeClassroomIndex];
+    const s = cls.assignments[si];
+    document.getElementById('reviewAssignmentName').innerText = `ห้อง: ${cls.name} | ${s.name}`;
+    renderReviewPosts();
+    document.getElementById('modalReviewPosts').classList.add('active');
+};
+
+window.renderReviewPosts = () => {
+    const s = activeEditorBoardData.classrooms[activeClassroomIndex].assignments[activeReviewAssignmentIndex];
+    const container = document.getElementById('reviewPostsContainer');
+    if(!s.posts || s.posts.length === 0) { container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text2)">ยังไม่มีใครส่งงาน</p>'; return; }
+    
+    container.innerHTML = s.posts.map((p, pi) => {
+        const badge = p.isGraded ? '<span class="pending-badge all-done">ตรวจแล้ว</span>' : '<span class="pending-badge has-pending">รอตรวจ</span>';
+        const actionBtn = p.isGraded ? `<button class="btn btn-sm" onclick="toggleGrade(${pi},false)">ยกเลิกตรวจ</button>` : `<button class="btn btn-primary btn-sm" onclick="toggleGrade(${pi},true)">ตรวจแล้ว</button>`;
+        return `<div style="background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;"><b>${p.title}</b> ${badge}</div>
+            <div style="font-size:0.85rem;margin:8px 0;">${p.desc||''}</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+                <button class="btn btn-danger btn-sm" onclick="delPost(${pi})">ลบ</button>
+                ${actionBtn}
             </div>
         </div>`;
     }).join('');
 };
 
-window.openBoardInApp = (id) => {
-    window.open(`index.html#${id}`, '_blank');
+window.toggleGrade = (pi, status) => {
+    activeEditorBoardData.classrooms[activeClassroomIndex].assignments[activeReviewAssignmentIndex].posts[pi].isGraded = status;
+    saveEditor(); renderReviewPosts(); renderEditor();
+};
+window.delPost = (pi) => {
+    activeEditorBoardData.classrooms[activeClassroomIndex].assignments[activeReviewAssignmentIndex].posts.splice(pi,1);
+    saveEditor(); renderReviewPosts(); renderEditor();
 };
 
-let activeEditorBoardId = null;
-let activeEditorBoardData = null;
-
-window.editBoardLayout = async (id) => {
-    switchView('board-editor');
-    document.getElementById('pageTitleText').innerText = 'กำลังโหลด...';
-    document.getElementById('headerActions').innerHTML = `<button class="btn btn-glass btn-sm" onclick="switchView('boards')"><i class="fas fa-arrow-left"></i> กลับไปบอร์ดทั้งหมด</button>`;
-    
-    const snap = await get(ref(db, 'boards/'+id));
-    if(snap.exists()){
-        activeEditorBoardId = id;
-        activeEditorBoardData = snap.val();
-        document.getElementById('pageTitleText').innerText = `จัดการโครงสร้าง: ${activeEditorBoardData.name}`;
-        renderEditor();
-    }
+// Sidebar Review View
+let reviewBoardsData = {}, reviewCurrentBoardId = null, reviewClassroomIndex = 0;
+window.loadReviewBoards = () => {
+    // Data is now handled by the global listener in initDashboard
+    renderReviewBoardList();
 };
 
-async function saveEditor(){
-    if(activeEditorBoardId) {
-        await set(ref(db, 'boards/'+activeEditorBoardId), activeEditorBoardData);
+function getPendingCount(bd) {
+    let count = 0;
+    if (bd.classrooms) {
+        bd.classrooms.forEach(c => {
+            if (c.assignments) {
+                c.assignments.forEach(a => {
+                    if (a.posts) {
+                        a.posts.forEach(p => {
+                            if (!p.isGraded) count++;
+                        });
+                    }
+                });
+            }
+        });
     }
+    return count;
 }
 
-function renderEditor(){
-    const c = document.getElementById('sectionsContainer');
-    const tpl = activeEditorBoardData.tpl || 'wall';
-    c.className = 'sections-container layout-'+tpl;
-    c.innerHTML = '';
+function renderReviewBoardList(){
+    const container = document.getElementById('reviewViewContent');
+    const ids = Object.keys(reviewBoardsData);
+    if(!ids.length) { container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text2)">ไม่มีบอร์ดที่ต้องตรวจ</p>'; return; }
     
-    if(!activeEditorBoardData.sections) activeEditorBoardData.sections = [];
-    
-    activeEditorBoardData.sections.forEach((s,i)=>{
-        const div = document.createElement('div'); div.className = 'section';
-        const postCount = s.posts ? s.posts.length : 0;
-        
-        div.innerHTML = `
-        <div class="section-header">
-            <div class="section-name"><i class="fas fa-bookmark"></i><span contenteditable="true" onblur="saveName(${i},this.innerText)">${s.name}</span></div>
-            <div class="section-actions">
-                <button class="icon-btn" style="color:#f87171" onclick="askConfirm('ลบส่วนนี้ทั้งหมดหรือไม่?',()=>delSec(${i}))"><i class="fas fa-trash-alt"></i></button>
-                <button class="icon-btn" onclick="openCtx(event,${i})"><i class="fas fa-ellipsis-v"></i></button>
+    container.innerHTML = '<div class="board-grid">' + ids.map(id => {
+        const bd = reviewBoardsData[id];
+        const pending = getPendingCount(bd);
+        return `
+        <div class="review-board-card" onclick="openReviewBoard('${id}')" style="position:relative;">
+            <div style="padding-right:30px;">
+                <b>${bd.name}</b>
+                <div style="font-size:0.8rem;color:var(--text2);margin-top:4px;">เจ้าของ: ${bd.createdBy || 'Unknown'}</div>
             </div>
-        </div>
-        <div class="section-body">
-            <div class="section-desc" contenteditable="true" onblur="saveDesc(${i},this.innerText)" data-placeholder="เขียนเนื้อหา...">${s.desc||''}</div>
-            <div style="margin-top:10px;color:var(--text2);font-size:0.85rem;"><i class="fas fa-file-alt"></i> ${postCount} โพสต์จากนักเรียน</div>
+            <div style="position:absolute;top:20px;right:20px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;${pending>0?'background:#fbbf24;color:#000;box-shadow:0 0 10px rgba(251,191,36,0.4);':'background:rgba(255,255,255,0.05);color:var(--text2);'}">
+                ${pending}
+            </div>
         </div>`;
-        c.appendChild(div);
-    });
+    }).join('') + '</div>';
 }
 
-window.addSection = () => { 
-    if(!activeEditorBoardData.sections) activeEditorBoardData.sections = [];
-    activeEditorBoardData.sections.push({id:Date.now(), name:'ส่วนที่ '+(activeEditorBoardData.sections.length+1), desc:''}); 
-    renderEditor(); saveEditor(); 
-};
-window.saveName = (i,t) => { activeEditorBoardData.sections[i].name = t.trim()||'ส่วนที่ '+(i+1); saveEditor(); };
-window.saveDesc = (i,t) => { activeEditorBoardData.sections[i].desc = t.trim(); saveEditor(); };
-window.delSec = (i) => { 
-    if(!activeEditorBoardData.sections) return;
-    activeEditorBoardData.sections.splice(i,1); 
-    if(!activeEditorBoardData.sections.length) {
-        activeEditorBoardData.sections.push({id:Date.now(), name:'ส่วนที่ 1', desc:''}); 
-    }
-    renderEditor(); saveEditor(); 
-};
+window.openReviewBoard = (id) => { reviewCurrentBoardId = id; reviewClassroomIndex = 0; renderReviewBoardDetail(); };
 
-let ctxIdx = null;
-window.openCtx = (e,i) => {
-    e.stopPropagation(); ctxIdx = i;
-    const m = document.getElementById('ctxMenu');
-    m.style.visibility = 'hidden'; m.classList.add('show');
-    const mw = m.offsetWidth, mh = m.offsetHeight;
-    const x = (e.clientX + mw > window.innerWidth) ? window.innerWidth - mw - 8 : e.clientX;
-    const y = (e.clientY + mh > window.innerHeight) ? window.innerHeight - mh - 8 : e.clientY;
-    m.style.top = y + 'px'; m.style.left = x + 'px';
-    m.style.visibility = 'visible';
-};
-
-window.ctxAction = (a) => {
-    document.getElementById('ctxMenu').classList.remove('show');
-    const i = ctxIdx;
-    if(a==='write'){ const el = document.querySelectorAll('.section-desc')[i]; if(el) el.focus(); }
-    else if(a==='rename'){ const el = document.querySelectorAll('.section-name span[contenteditable]')[i]; if(el) el.focus(); }
-    else if(a==='cloneSection'){ const clone = JSON.parse(JSON.stringify(activeEditorBoardData.sections[i])); clone.id = Date.now(); clone.name += ' (สำเนา)'; activeEditorBoardData.sections.splice(i+1,0,clone); renderEditor(); saveEditor(); showToast('คัดลอกส่วนแล้ว'); }
-    else if(a==='clear'){ activeEditorBoardData.sections[i].desc=''; activeEditorBoardData.sections[i].posts=[]; renderEditor(); saveEditor(); showToast('ล้างเนื้อหาแล้ว'); }
-    else if(a==='delete'){ askConfirm('ลบส่วนนี้ทั้งหมดหรือไม่?', ()=>{ delSec(i); }); }
-};
-document.addEventListener('click',()=>document.getElementById('ctxMenu')?.classList.remove('show'));
-
-let editingBoardId = null;
-let selectedTemplate = 'wall';
-
-window.selectTemplate = (tpl, el) => {
-    selectedTemplate = tpl;
-    document.querySelectorAll('#templateSelectionGroup .template-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-};
-
-window.openCreateBoardModal = () => {
-    editingBoardId = null;
-    document.getElementById('modalBoardTitle').innerHTML = '<i class="fas fa-plus"></i> สร้างบอร์ดใหม่';
-    document.getElementById('boardNameInput').value = '';
-    document.getElementById('templateSelectionGroup').style.display = 'block';
-    selectedTemplate = 'wall';
-    document.querySelectorAll('#templateSelectionGroup .template-card').forEach(c => c.classList.remove('selected'));
-    document.querySelector('#templateSelectionGroup .template-card').classList.add('selected');
-    document.getElementById('btnSaveBoard').onclick = saveBoard;
-    document.getElementById('modalBoard').classList.add('active');
-};
-
-window.openEditBoardModal = (id, oldName) => {
-    editingBoardId = id;
-    document.getElementById('modalBoardTitle').innerHTML = '<i class="fas fa-pen"></i> แก้ไขชื่อบอร์ด';
-    document.getElementById('boardNameInput').value = oldName;
-    document.getElementById('templateSelectionGroup').style.display = 'none';
-    document.getElementById('btnSaveBoard').onclick = saveBoard;
-    document.getElementById('modalBoard').classList.add('active');
-};
-
-async function saveBoard() {
-    const name = document.getElementById('boardNameInput').value.trim();
-    if(!name) return;
-
-    if(editingBoardId){
-        // Edit existing
-        await set(ref(db, `boards_index/${editingBoardId}/name`), name);
-        // We should also update the name in the actual board data
-        const boardSnap = await get(ref(db, `boards/${editingBoardId}`));
-        if(boardSnap.exists()){
-            await set(ref(db, `boards/${editingBoardId}/name`), name);
-        }
-        showToast('แก้ไขชื่อบอร์ดแล้ว');
-    } else {
-        // Create new
-        const newId = 'B-'+Math.random().toString(36).substr(2,9);
-        const ts = Date.now();
-        const boardData = { name, tpl: selectedTemplate, sections: [{id:ts, name:'ส่วนที่ 1', desc:'', posts:[]}] };
-        await set(ref(db, `boards/${newId}`), boardData);
-        await set(ref(db, `boards_index/${newId}`), { name, ts, tpl: selectedTemplate });
-        showToast('สร้างบอร์ดใหม่แล้ว');
-    }
-    closeModal('modalBoard');
+function renderReviewBoardDetail(){
+    const container = document.getElementById('reviewViewContent');
+    const bd = reviewBoardsData[reviewCurrentBoardId];
+    if(!bd.classrooms) { container.innerHTML = '<p>บอร์ดนี้ไม่มีห้องเรียน</p>'; return; }
+    
+    const tabs = bd.classrooms.map((c, i) => {
+        const p = (c.assignments || []).reduce((acc, a) => acc + (a.posts || []).filter(post => !post.isGraded).length, 0);
+        return `<button class="classroom-tab ${i===reviewClassroomIndex?'active':''}" onclick="reviewSelectClass(${i})">
+            ${c.name}
+            ${p > 0 ? `<span class="tab-badge">${p}</span>` : ''}
+        </button>`;
+    }).join('');
+    const assignments = (bd.classrooms[reviewClassroomIndex].assignments || []).map((a, ai) => {
+        const pending = (a.posts || []).filter(p => !p.isGraded).length;
+        return `
+        <div class="review-board-card" onclick="openReviewAssignment('${ai}')" style="position:relative;">
+            <div style="padding-right:30px;">
+                <b>${a.name}</b>
+                <div style="font-size:0.8rem;color:var(--text2);margin-top:4px;">ทั้งหมด ${a.posts?a.posts.length:0} โพสต์</div>
+            </div>
+            <div style="position:absolute;top:20px;right:20px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;${pending>0?'background:#fbbf24;color:#000;':'background:rgba(255,255,255,0.05);color:var(--text2);'}">
+                ${pending}
+            </div>
+        </div>`;
+    }).join('');
+        
+    container.innerHTML = `<button class="btn btn-glass btn-sm" onclick="loadReviewBoards()" style="margin-bottom:16px;">กลับ</button>
+        <h3>${bd.name}</h3>
+        <div style="display:flex;gap:8px;margin:12px 0;">${tabs}</div>
+        <div class="board-grid">${assignments}</div>`;
 }
 
-window.deleteBoard = (id) => {
-    askConfirm('คุณต้องการลบบอร์ดนี้อย่างถาวรหรือไม่? ข้อมูลทั้งหมดจะหายไป', async () => {
-        await remove(ref(db, `boards/${id}`));
-        await remove(ref(db, `boards_index/${id}`));
-        showToast('ลบบอร์ดเรียบร้อยแล้ว');
-    });
+window.reviewSelectClass = (i) => { reviewClassroomIndex = i; renderReviewBoardDetail(); };
+window.openReviewAssignment = (ai) => {
+    activeEditorBoardData = reviewBoardsData[reviewCurrentBoardId];
+    activeEditorBoardId = reviewCurrentBoardId;
+    activeClassroomIndex = reviewClassroomIndex;
+    openReviewModal(parseInt(ai));
 };
 
-// ---------------- Admin Management ----------------
+// Admin Management
 window.renderAdmins = () => {
     const tbody = document.getElementById('adminTableBody');
-    const adminList = Object.keys(allAdmins);
-    
-    tbody.innerHTML = adminList.map(username => `
+    const isSuper = currentUser === 'admin';
+    tbody.innerHTML = Object.keys(allAdmins).map(u => `
         <tr>
-            <td><i class="fas fa-user" style="color:var(--primary-light);margin-right:8px;"></i> ${username} ${username === currentUser ? '<span style="font-size:0.75rem;color:#a5b4fc;background:rgba(99,102,241,0.2);padding:2px 8px;border-radius:10px;margin-left:8px;">(คุณ)</span>' : ''}</td>
+            <td>${u} ${u==='admin'?'(Super)':''}</td>
             <td style="text-align:right;">
-                ${username !== currentUser ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${username}')"><i class="fas fa-trash"></i> ลบ</button>` : ''}
+                ${isSuper && u !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u}')">ลบ</button>` : ''}
             </td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 };
 
 window.openAddAdminModal = () => {
-    document.getElementById('adminUserInput').value = '';
-    document.getElementById('adminPassInput').value = '';
+    if(currentUser !== 'admin') { showToast('เฉพาะ Super Admin เท่านั้น', 'fas fa-lock'); return; }
     document.getElementById('modalAdmin').classList.add('active');
 };
 
 window.saveAdmin = async () => {
-    const user = document.getElementById('adminUserInput').value.trim();
-    const pass = document.getElementById('adminPassInput').value.trim();
-    
-    if(!user || !pass) {
-        showToast('กรุณากรอกข้อมูลให้ครบ','fas fa-exclamation-circle');
-        return;
-    }
-    if(allAdmins[user]){
-        showToast('มี Username นี้ในระบบแล้ว','fas fa-times-circle');
-        return;
-    }
-
-    await set(ref(db, `admin_users/${user}`), { pass });
-    showToast('เพิ่มผู้ดูแลระบบเรียบร้อย');
-    closeModal('modalAdmin');
+    const u = document.getElementById('adminUserInput').value.trim();
+    const p = document.getElementById('adminPassInput').value.trim();
+    if(u && p) { await set(ref(db, `admin_users/${u}`), {pass:p}); closeModal('modalAdmin'); showToast('เพิ่มแล้ว'); }
 };
 
-window.deleteAdmin = (username) => {
-    if(username === currentUser) return;
-    askConfirm(`ยืนยันการลบแอดมิน ${username} ใช่หรือไม่?`, async () => {
-        await remove(ref(db, `admin_users/${username}`));
-        showToast('ลบแอดมินเรียบร้อยแล้ว');
-    });
+window.deleteAdmin = (u) => askConfirm(`ลบ ${u}?`, async () => { await remove(ref(db, `admin_users/${u}`)); });
+
+// Board CRUD
+let editingBoardId = null;
+window.openCreateBoardModal = () => {
+    editingBoardId = null; document.getElementById('modalBoard').classList.add('active');
+    document.getElementById('templateSelectionGroup').style.display = 'block';
+};
+window.openEditBoardModal = (id, name) => {
+    editingBoardId = id; document.getElementById('boardNameInput').value = name;
+    document.getElementById('templateSelectionGroup').style.display = 'none';
+    document.getElementById('modalBoard').classList.add('active');
+};
+document.getElementById('btnSaveBoard').onclick = async () => {
+    const name = document.getElementById('boardNameInput').value.trim();
+    if(!name) return;
+    if(editingBoardId){
+        await set(ref(db, `boards_index/${editingBoardId}/name`), name);
+        await set(ref(db, `boards/${editingBoardId}/name`), name);
+    } else {
+        const id = 'B-'+Date.now();
+        const data = { name, createdBy: currentUser, ts: Date.now(), tpl: selectedTemplate, classrooms: [{id:Date.now(), name:'ปวช.1', assignments:[]}] };
+        await set(ref(db, `boards/${id}`), data);
+        await set(ref(db, `boards_index/${id}`), { name, createdBy: currentUser, ts: Date.now(), tpl: selectedTemplate });
+    }
+    closeModal('modalBoard');
+};
+
+window.deleteBoard = (id) => askConfirm('ลบถาวร?', async () => {
+    await remove(ref(db, `boards/${id}`)); await remove(ref(db, `boards_index/${id}`));
+});
+
+let selectedTemplate = 'wall';
+window.selectTemplate = (t, el) => {
+    selectedTemplate = t;
+    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
 };
 
 </script>
