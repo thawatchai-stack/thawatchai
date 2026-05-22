@@ -10,16 +10,20 @@
 <script>
   // Global Error Handler to catch ES Module and CORS loading failures
   window.addEventListener('error', function(e) {
-    console.error("Captured global error:", e);
-    const msg = e.message || "Failed to load script (CORS / Local File Restriction)";
-    showStartupError(msg);
+    // Only capture actual JS runtime/syntax errors or script load failures
+    if (e instanceof ErrorEvent) {
+      console.error("Captured global error:", e);
+      showStartupError(e.message);
+    } else if (e.target && e.target.tagName === 'SCRIPT') {
+      console.error("Script failed to load:", e.target.src);
+      showStartupError("Failed to load script: " + (e.target.src || "inline/local script"));
+    }
   }, true);
 
-  // Promise rejection listener (e.g. Supabase connection failure)
+  // Promise rejection listener
   window.addEventListener('unhandledrejection', function(e) {
     console.error("Unhandled promise rejection:", e.reason);
-    const reasonMsg = e.reason?.message || String(e.reason);
-    showStartupError(reasonMsg);
+    // Ignore handled rejections or non-critical errors
   });
 
   function showStartupError(reason) {
