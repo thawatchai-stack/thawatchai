@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ClassBoard Student — พาสปอร์ตและส่งงาน</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Global Error Handler to catch ES Module and CORS loading failures
+  window.addEventListener('error', function(e) {
+    console.error("Captured global error:", e);
+    const msg = e.message || "Failed to load script (CORS / Local File Restriction)";
+    showStartupError(msg);
+  }, true);
+
+  // Promise rejection listener (e.g. Supabase connection failure)
+  window.addEventListener('unhandledrejection', function(e) {
+    console.error("Unhandled promise rejection:", e.reason);
+    const reasonMsg = e.reason?.message || String(e.reason);
+    showStartupError(reasonMsg);
+  });
+
+  function showStartupError(reason) {
+    const errorBanner = document.getElementById('startupErrorBanner');
+    if (errorBanner) {
+      errorBanner.style.display = 'block';
+      const textEl = document.getElementById('startupErrorText');
+      if (textEl) {
+        textEl.innerText = "เกิดข้อผิดพลาด: " + reason;
+      }
+    }
+  }
+
+  // Placeholder functions that will be overridden by the ES module if loaded successfully
+  window.doLogin = function() {
+    alert("❌ ไม่สามารถเข้าสู่ระบบได้\n\nระบบยังโหลดไม่สมบูรณ์ หรือเกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล (CORS / Local File Blocked)\n\n👉 วิธีแก้ไข:\n1. ตรวจสอบว่าท่านเปิดไฟล์นี้ผ่าน Web Server (เช่น http://localhost... หรือ VS Code Live Server)\n2. ไม่ควรเปิดแบบ ดับเบิลคลิกไฟล์ตรงๆ (ลิงก์ file:///...)\n3. เปิดหน้าต่าง Developer Tools (กด F12) เพื่อดูข้อผิดพลาดใน Console");
+  };
+  window.doRegister = function() {
+    alert("❌ ไม่สามารถลงทะเบียนได้\n\nระบบยังโหลดไม่สมบูรณ์ หรือเกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล (CORS / Local File Blocked)\n\n👉 วิธีแก้ไข:\n1. ตรวจสอบว่าท่านเปิดไฟล์นี้ผ่าน Web Server (เช่น http://localhost... หรือ VS Code Live Server)\n2. ไม่ควรเปิดแบบ ดับเบิลคลิกไฟล์ตรงๆ (ลิงก์ file:///...)\n3. เปิดหน้าต่าง Developer Tools (กด F12) เพื่อดูข้อผิดพลาดใน Console");
+  };
+  window.loadClassroomNames = function() {
+    console.warn("loadClassroomNames is not loaded yet.");
+  };
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--primary:#14b8a6;--primary-glow:rgba(20,184,166,0.25);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.25);--dark:#0a0f1e;--glass:rgba(15,23,42,0.85);--glass2:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.08);--text:#f1f5f9;--text2:#94a3b8;--radius:16px;--gold:#fbbf24;--stamp-red:#ef4444;--success:#10b981}
+body{font-family:'IBM Plex Sans Thai','Prompt',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-fixed{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#0a0f1e 0%,#09152b 50%,#08203e 100%);opacity:.95}
+.bg-fixed::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 10% 20%,var(--primary-glow),transparent 40%),radial-gradient(circle at 90% 80%,var(--accent-glow),transparent 40%)}
+.app-container{position:relative;z-index:1;width:100%;max-width:540px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:rgba(10,15,30,0.5);border-left:1px solid var(--border);border-right:1px solid var(--border)}
+
+/* Screen Transitions */
+.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .4s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Auth Screen */
+.auth-panel{padding:40px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:100vh}
+.logo-area{width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 8px 24px rgba(99,102,241,0.3);font-size:36px;color:#fff}
+.auth-panel h1{font-size:1.8rem;margin-bottom:8px;font-weight:700;background:linear-gradient(135deg,#fff,var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-panel p{font-size:0.9rem;color:var(--text2);margin-bottom:32px}
+.form-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:30px 24px;text-align:left;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.auth-tabs{display:flex;background:rgba(0,0,0,0.3);padding:4px;border-radius:12px;margin-bottom:24px}
+.auth-tab{flex:1;padding:10px;border:none;border-radius:8px;font-family:inherit;font-weight:600;font-size:0.85rem;color:var(--text2);background:transparent;cursor:pointer;transition:all 0.2s}
+.auth-tab.active{background:var(--glass2);color:var(--primary)}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:0.8rem;color:var(--text2);margin-bottom:6px;font-weight:500}
+.input{width:100%;padding:13px 16px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;transition:all 0.3s;outline:none}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(20,184,166,0.15)}
+.input option{background:#111827;color:#f1f5f9}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.3s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 4px 15px rgba(99,102,241,0.2)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,0.3)}
+.btn-outline:hover{background:rgba(255,255,255,0.1)}
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Main Header */
+.app-header{padding:16px 20px;background:var(--glass);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:90}
+.user-info-bar{display:flex;align-items:center;gap:10px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-glow);border:1px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--primary)}
+.user-meta{line-height:1.2}
+.user-meta .name{font-size:0.85rem;font-weight:600;color:var(--text)}
+.user-meta .room{font-size:0.75rem;color:var(--text2)}
+.btn-logout{width:32px;height:32px;border-radius:8px;background:var(--glass2);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem}
+
+/* Navigation Tabs */
+.app-nav{display:flex;background:var(--glass);border-top:1px solid var(--border);position:sticky;bottom:0;z-index:90;backdrop-filter:blur(10px);padding:8px 12px 24px}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;background:transparent;border:none;color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.7rem;font-weight:500;transition:all 0.2s}
+.nav-tab i{font-size:1.2rem}
+.nav-tab.active{color:var(--primary)}
+
+/* Main Content Area */
+.main-content{flex:1;padding:20px;overflow-y:auto;padding-bottom:100px}
+.section-title{font-size:1.15rem;font-weight:600;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+
+/* Work Submission / Boards UI */
+.board-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;cursor:pointer;transition:all 0.2s}
+.board-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.board-subject-badge{font-size:0.65rem;padding:2px 6px;border-radius:4px;font-weight:600;margin-left:8px;display:inline-block}
+.bsb-drawing{background:rgba(99,102,241,0.15);color:#818cf8}
+.bsb-safety{background:rgba(20,184,166,0.15);color:#2dd4bf}
+.bsb-general{background:var(--glass2);color:var(--text2)}
+.board-name{font-size:1rem;font-weight:600;color:var(--text)}
+.board-owner{font-size:0.75rem;color:var(--text2);margin-top:4px}
+.assignment-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.assignment-list-modal.active{display:flex}
+.modal-content{background:#111827;border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;padding:20px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px}
+.modal-body{overflow-y:auto;flex:1}
+.assignment-card{background:var(--glass2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+.assignment-card:hover{border-color:var(--primary)}
+
+/* Post Submission */
+.submit-work-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:12px}
+.post-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.post-status{font-size:0.7rem;padding:2px 8px;border-radius:10px;font-weight:600}
+.status-graded{background:rgba(16,185,129,0.15);color:#10b981}
+.status-pending{background:rgba(245,158,11,0.15);color:#fbbf24}
+
+/* Passport booklet */
+.passport-subtabs{display:flex;background:rgba(0,0,0,0.3);padding:4px;border-radius:10px;margin-bottom:16px}
+.passport-subtab{flex:1;padding:8px;border:none;border-radius:8px;font-family:inherit;font-size:0.8rem;font-weight:600;color:var(--text2);background:transparent;cursor:pointer;transition:all 0.2s}
+.passport-subtab.active{background:var(--glass2);color:var(--primary)}
+.passport-booklet{background:#fdfbf7;color:#334155;border-radius:12px;border:2px solid #8b7355;padding:20px;min-height:480px;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;flex-direction:column}
+.booklet-nav{display:flex;justify-content:space-between;margin-top:auto;padding-top:16px;border-top:1px dashed #d1c7bd}
+.btn-booklet{padding:6px 12px;background:#334155;color:#fff;border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit}
+.btn-booklet:disabled{opacity:0.3;cursor:not-allowed}
+
+/* Emblem & booklet styles */
+.booklet-page{display:none;flex:1;flex-direction:column;animation:fadeInBooklet .3s ease}
+.booklet-page.active{display:flex}
+@keyframes fadeInBooklet{from{opacity:0}to{opacity:1}}
+.booklet-title{font-family:'Prompt',sans-serif;font-weight:700;color:#1e293b;text-align:center;font-size:1.15rem;margin-bottom:4px}
+.booklet-subtitle{font-family:'Prompt',sans-serif;font-size:0.75rem;color:#b8960b;text-align:center;font-weight:600;margin-bottom:12px}
+.stat-bar{display:flex;justify-content:space-around;background:rgba(0,0,0,0.04);border-radius:8px;padding:8px;margin-bottom:14px}
+.stat-item{text-align:center;line-height:1.3}
+.stat-label{font-size:0.65rem;color:#64748b;text-transform:uppercase}
+.stat-value{font-size:0.9rem;font-weight:700;color:#1e293b}
+.progress-line{height:6px;background:#e2e8f0;border-radius:3px;margin:8px 0 16px;overflow:hidden}
+.progress-fill{height:100%;background:#fbbf24;width:0%;transition:width 0.3s}
+
+/* Passport Cover */
+.booklet-emblem{font-size:3.2rem;text-align:center;margin:15px 0 10px}
+.passport-team-badge{display:inline-block;margin:0 auto 12px;background:rgba(212,175,55,0.12);border:1px dashed #fbbf24;border-radius:20px;padding:4px 16px;font-size:0.8rem;color:#b8960b;font-weight:700;text-align:center}
+
+/* Photos Layout */
+.booklet-photos{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+.photo-slot{text-align:center}
+.photo-slot-label{font-size:0.65rem;color:#64748b;margin-bottom:4px;text-transform:uppercase}
+.photo-box{width:80px;height:105px;border:2px dashed #cbd5e1;background:rgba(0,0,0,0.02);margin:0 auto 6px;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.photo-box img{width:100%;height:100%;object-fit:cover}
+.photo-box i{font-size:1.8rem;color:#cbd5e1}
+.photo-slot-name{font-size:0.8rem;font-weight:600;color:#1e293b}
+
+/* Booklet field */
+.booklet-field{border-bottom:1px solid #e2e8f0;padding:6px 0}
+.booklet-field-label{font-size:0.65rem;color:#64748b;text-transform:uppercase}
+.booklet-field-val{font-size:0.8rem;font-weight:600;color:#1e293b}
+
+/* History Logs */
+.history-item{font-size:0.75rem;padding:6px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:between;gap:8px}
+.chal-item{background:rgba(0,0,0,0.02);border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.chal-checkbox{width:18px;height:18px;border-radius:4px;border:1px solid #cbd5e1;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem;background:#fff;flex-shrink:0}
+.chal-checkbox.checked{background:#10b981;border-color:#10b981}
+
+/* Profile Photo Upload Style */
+.profile-upload-zone{width:100%;max-width:120px;aspect-ratio:3/4;border:2px dashed var(--border);border-radius:10px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden}
+.profile-upload-zoneimg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.profile-upload-zone i{font-size:2rem;color:var(--text2);margin-bottom:6px}
+.profile-upload-zone span{font-size:0.7rem;color:var(--text2)}
+
+/* Large file attach button */
+.btn-large-file{padding:8px 12px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:8px;color:#818cf8;font-size:0.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s}
+.btn-large-file:hover{background:rgba(255,255,255,0.12)}
+.img-compress-preview{max-width:100%;max-height:120px;object-fit:contain;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none}
+
+/* Toast alert */
+.toast-msg{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;border:1px solid var(--border);padding:10px 20px;border-radius:30px;font-size:0.85rem;color:var(--text);z-index:900;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:all 0.3s}
+.toast-msg.active{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+</style>
+</head>
+<body>
+<div class="bg-fixed"></div>
+
+<div class="app-container">
+    
+    <!-- 1. LOGIN / REGISTER SCREEN -->
+    <div id="screenAuth" class="screen active">
+        <div class="auth-panel">
+            <div class="logo-area"><i class="fas fa-graduation-cap"></i></div>
+            <h1>ClassBoard Ecosystem</h1>
+            <!-- Startup Error Banner -->
+            <div id="startupErrorBanner" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:15px; margin-bottom:20px; text-align:left; color:#f87171; font-size:0.85rem; line-height:1.5;">
+                <div style="font-weight:700; font-size:0.95rem; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-exclamation-circle" style="color:#ef4444; font-size:1.1rem;"></i> พบข้อผิดพลาดในการโหลดระบบ (Script / Connection Issue)
+                </div>
+                <span id="startupErrorText">กำลังเชื่อมต่อระบบ...</span>
+                <div style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(239,68,68,0.2); font-size:0.8rem; color:var(--text2);">
+                    💡 <strong>คำแนะนำเพิ่มเติม:</strong><br>
+                    • หากเปิดไฟล์ HTML แบบดับเบิลคลิกตรง ๆ (ลิงก์เริ่มด้วย <code>file:///</code>) เบราว์เซอร์จะบล็อกโมดูลความปลอดภัย (CORS)<br>
+                    • กรุณาเปิดหน้าเว็บผ่าน **Web Server / VS Code Live Server** หรือโฮสติ้งจริงเท่านั้น เพื่อให้เชื่อมฐานข้อมูล Supabase ได้ครับ
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchAuthTab('login', event)">เข้าสู่ระบบ</button>
+                    <button class="auth-tab" onclick="switchAuthTab('register', event)">ลงทะเบียนใหม่</button>
+                </div>
+                
+                <!-- Login Tab Content -->
+                <div id="authLoginZone">
+                    <div class="form-group">
+                        <label>เบอร์โทรศัพท์ที่ลงทะเบียน</label>
+                        <input type="tel" class="input" id="loginPhone" placeholder="08XXXXXXXX" onkeypress="if(event.key==='Enter') doLogin()">
+                    </div>
+                    <button class="btn btn-primary" onclick="doLogin()">🚀 เข้าสู่ระบบ</button>
+                </div>
+                
+                <!-- Register Tab Content -->
+                <div id="authRegisterZone" style="display:none;">
+                    <div class="form-group">
+                        <label>เลือกห้องเรียนของคุณ</label>
+                        <select class="input" id="regClassroom" onchange="loadClassroomNames()">
+                            <option value="">-- เลือกห้องเรียน --</option>
+                            <option value="ปวช.1/1">ปวช.1/1</option>
+                            <option value="ปวช.1/2">ปวช.1/2</option>
+                            <option value="ปวช.1/3">ปวช.1/3</option>
+                            <option value="ปวช.1/4">ปวช.1/4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อ - นามสกุลของคุณ (เลือกจากบัญชีรายชื่อ)</label>
+                        <select class="input" id="regName">
+                            <option value="">-- เลือกชื่อจริงของคุณ --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>เบอร์โทรศัพท์ (ใช้เป็น ID ในการ Login)</label>
+                        <input type="tel" class="input" id="regPhone" placeholder="08XXXXXXXX">
+                    </div>
+                    <button class="btn btn-primary" onclick="doRegister()">📝 ลงทะเบียนบัญชี</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 2. MAIN STUDENT APP SCREEN -->
+    <div id="screenApp" class="screen">
+        <div class="app-header">
+            <div class="user-info-bar">
+                <div class="user-avatar" id="avatarName">-</div>
+                <div class="user-meta">
+                    <div class="name" id="profileNameDisplay">-</div>
+                    <div class="room" id="profileClassDisplay">-</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logoutStudent()"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+        
+        <div class="main-content">
+            
+            <!-- T1: MY WORK/BOARDS SECTION -->
+            <div id="secBoards" class="app-section">
+                <div class="section-title"><i class="fas fa-chalkboard" style="color:var(--primary)"></i> กระดานส่งงานห้องฉัน</div>
+                <div id="studentBoardsGrid"></div>
+            </div>
+            
+            <!-- T2: PASSPORTS SECTION -->
+            <div id="secPassports" class="app-section" style="display:none;">
+                <div class="passport-subtabs">
+                    <button class="passport-subtab active" onclick="switchPassportType('drawing', event)">📐 Drawing Passport</button>
+                    <button class="passport-subtab" onclick="switchPassportType('safety', event)">🛡️ Safety Passport</button>
+                </div>
+                
+                <!-- Drawing Booklet Container -->
+                <div id="drawingPassportZone">
+                    <div class="passport-booklet">
+                        <!-- Cover Page -->
+                        <div class="booklet-page active" id="dp-p1">
+                            <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; display:flex; justify-content:space-around; align-items:center; width:100%; margin-bottom:15px; font-size:0.8rem; font-weight:600; color:#f1f5f9; box-shadow:0 4px 12px rgba(0,0,0,0.15)">
+                                <span><i class="fas fa-star" style="color:#fbbf24; margin-right:4px;"></i> แต้ม: <span id="dp-cov-val-pts" style="color:#fbbf24; font-weight:700;">0</span></span>
+                                <span style="color:rgba(255,255,255,0.15)">|</span>
+                                <span><i class="fas fa-stamp" style="color:#ef4444; margin-right:4px;"></i> ตราประทับ: <span id="dp-cov-val-stamps" style="color:#ef4444; font-weight:700;">0</span></span>
+                                <span style="color:rgba(255,255,255,0.15)">|</span>
+                                <span><i class="fas fa-medal" style="color:#38bdf8; margin-right:4px;"></i> ระดับ: <span id="dp-cov-val-rank" style="color:#38bdf8; font-weight:700;">Trainee</span></span>
+                            </div>
+                            <div class="booklet-emblem" style="color:#b8960b"><i class="fas fa-drafting-compass"></i></div>
+                            <div class="booklet-title">DRAWING PASSPORT</div>
+                            <div class="booklet-subtitle">วิชาเขียนแบบเทคนิคเบื้องต้น</div>
+                            <div class="passport-team-badge" id="dp-team-text">ทีม: -</div>
+                            
+                            <div class="booklet-photos">
+                                <div class="photo-slot">
+                                    <div class="photo-slot-label">นักเรียน</div>
+                                    <div class="photo-box"><img id="dp-photo-stu" src=""><i class="fas fa-user" id="dp-stu-icon"></i></div>
+                                    <div class="photo-slot-name" id="dp-name-stu">-</div>
+                                </div>
+                                <div class="photo-slot">
+                                    <div class="photo-slot-label">คู่บัดดี้</div>
+                                    <div class="photo-box"><img id="dp-photo-bud" src=""><i class="fas fa-user-friends" id="dp-bud-icon"></i></div>
+                                    <div class="photo-slot-name" id="dp-name-bud">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Page -->
+                        <div class="booklet-page" id="dp-p2">
+                            <div class="booklet-title">ข้อมูลประจำตัว</div>
+                            <div class="stat-bar">
+                                <div class="stat-item"><div class="stat-label">แต้ม</div><div class="stat-value" id="dp-val-pts">0</div></div>
+                                <div class="stat-item"><div class="stat-label">ตราประทับ</div><div class="stat-value" id="dp-val-stamps">0</div></div>
+                                <div class="stat-item"><div class="stat-label">ยศ</div><div class="stat-value" id="dp-val-rank">Trainee</div></div>
+                            </div>
+                            <div class="progress-line"><div class="progress-fill" id="dp-prog-fill"></div></div>
+                            
+                            <div class="booklet-field"><div class="booklet-field-label">รหัสผู้ถือพาสปอร์ต</div><div class="booklet-field-val" id="dp-val-phone">-</div></div>
+                            <div class="booklet-field"><div class="booklet-field-label">ระดับชั้น</div><div class="booklet-field-val" id="dp-val-class">-</div></div>
+                            <div class="booklet-field"><div class="booklet-field-label">วันที่ออกประจำตัว</div><div class="booklet-field-val" id="dp-val-date">-</div></div>
+                        </div>
+                        
+                        <!-- Weekly Challenges -->
+                        <div class="booklet-page" id="dp-p3">
+                            <div class="booklet-title">ภารกิจทักษะเขียนแบบ</div>
+                            <div class="booklet-subtitle" style="margin-bottom:8px">Drawing Quest & Achievements</div>
+                            <div id="dp-challenges-list" style="overflow-y:auto;flex:1;max-height:280px;padding-right:4px"></div>
+                        </div>
+                        
+                        <!-- Growth Chart -->
+                        <div class="booklet-page" id="dp-p4">
+                            <div class="booklet-title">ความก้าวหน้าสะสม</div>
+                            <div style="width:100%;height:160px;margin-bottom:12px"><canvas id="dpGrowthChart"></canvas></div>
+                            
+                            <div style="font-size:0.75rem;color:#475569">
+                                <strong>🏆 เกณฑ์การจัดยศวิชาเขียนแบบ:</strong><br>
+                                • < 3 ตรา: 🎖️ Trainee<br>
+                                • 3–7 ตรา: 📐 Draftsman<br>
+                                • 8–11 ตรา: 🎖️ Expert<br>
+                                • 12+ ตรา: 👑 Master
+                            </div>
+                        </div>
+                        
+                        <!-- Booklet Nav Controls -->
+                        <div class="booklet-nav">
+                            <button class="btn-booklet" id="btn-dp-prev" onclick="navBooklet('dp', -1)">ก่อนหน้า</button>
+                            <span style="font-size:0.75rem;color:#64748b;font-weight:600" id="dp-page-num">1/4</span>
+                            <button class="btn-booklet" id="btn-dp-next" onclick="navBooklet('dp', 1)">ถัดไป</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Safety Booklet Container -->
+                <div id="safetyPassportZone" style="display:none;">
+                    <div class="passport-booklet" style="border-color:#b45309">
+                        <!-- Cover Page -->
+                        <div class="booklet-page active" id="sp-p1">
+                            <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; display:flex; justify-content:space-around; align-items:center; width:100%; margin-bottom:15px; font-size:0.8rem; font-weight:600; color:#f1f5f9; box-shadow:0 4px 12px rgba(0,0,0,0.15)">
+                                <span><i class="fas fa-star" style="color:#fbbf24; margin-right:4px;"></i> แต้ม: <span id="sp-cov-val-pts" style="color:#fbbf24; font-weight:700;">0</span></span>
+                                <span style="color:rgba(255,255,255,0.15)">|</span>
+                                <span><i class="fas fa-stamp" style="color:#ef4444; margin-right:4px;"></i> ตราประทับ: <span id="sp-cov-val-stamps" style="color:#ef4444; font-weight:700;">0</span></span>
+                                <span style="color:rgba(255,255,255,0.15)">|</span>
+                                <span><i class="fas fa-medal" style="color:#38bdf8; margin-right:4px;"></i> ระดับ: <span id="sp-cov-val-rank" style="color:#38bdf8; font-weight:700;">Trainee</span></span>
+                            </div>
+                            <div class="booklet-emblem" style="color:#b45309"><i class="fas fa-shield-alt"></i></div>
+                            <div class="booklet-title">SAFETY PASSPORT</div>
+                            <div class="booklet-subtitle">วิชาความปลอดภัยในสถานศึกษา</div>
+                            <div class="passport-team-badge" id="sp-team-text" style="color:#b45309;background:rgba(180,83,9,0.12);border-color:#b45309">ทีม: -</div>
+                            
+                            <div class="booklet-photos">
+                                <div class="photo-slot">
+                                    <div class="photo-slot-label">นักเรียน</div>
+                                    <div class="photo-box"><img id="sp-photo-stu" src=""><i class="fas fa-user" id="sp-stu-icon"></i></div>
+                                    <div class="photo-slot-name" id="sp-name-stu">-</div>
+                                </div>
+                                <div class="photo-slot">
+                                    <div class="photo-slot-label">Safety Partner</div>
+                                    <div class="photo-box"><img id="sp-photo-bud" src=""><i class="fas fa-user-shield" id="sp-bud-icon"></i></div>
+                                    <div class="photo-slot-name" id="sp-name-bud">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Page -->
+                        <div class="booklet-page" id="sp-p2">
+                            <div class="booklet-title">ข้อมูลประจำตัว</div>
+                            <div class="stat-bar">
+                                <div class="stat-item"><div class="stat-label">แต้ม</div><div class="stat-value" id="sp-val-pts">0</div></div>
+                                <div class="stat-item"><div class="stat-label">ตราประทับ</div><div class="stat-value" id="sp-val-stamps">0</div></div>
+                                <div class="stat-item"><div class="stat-label">ยศ</div><div class="stat-value" id="sp-val-rank">Trainee</div></div>
+                            </div>
+                            <div class="progress-line"><div class="progress-fill" id="sp-prog-fill"></div></div>
+                            
+                            <div class="booklet-field"><div class="booklet-field-label">รหัสผู้ถือพาสปอร์ต</div><div class="booklet-field-val" id="sp-val-phone">-</div></div>
+                            <div class="booklet-field"><div class="booklet-field-label">ระดับชั้น</div><div class="booklet-field-val" id="sp-val-class">-</div></div>
+                            <div class="booklet-field"><div class="booklet-field-label">วันที่ออกประจำตัว</div><div class="booklet-field-val" id="sp-val-date">-</div></div>
+                        </div>
+                        
+                        <!-- Weekly Challenges -->
+                        <div class="booklet-page" id="sp-p3">
+                            <div class="booklet-title">ภารกิจผู้พิทักษ์ภัย</div>
+                            <div class="booklet-subtitle" style="margin-bottom:8px">Weekly Safety Challenges</div>
+                            <div id="sp-challenges-list" style="overflow-y:auto;flex:1;max-height:280px;padding-right:4px"></div>
+                        </div>
+                        
+                        <!-- Growth Chart -->
+                        <div class="booklet-page" id="sp-p4">
+                            <div class="booklet-title">ความก้าวหน้าสะสม</div>
+                            <div style="width:100%;height:160px;margin-bottom:12px"><canvas id="spGrowthChart"></canvas></div>
+                            
+                            <div style="font-size:0.75rem;color:#475569">
+                                <strong>🏆 เกณฑ์การจัดยศวิชาความปลอดภัย:</strong><br>
+                                • < 8 ตรา: 🎖️ Guardian Trainee<br>
+                                • 8–10 ตรา: 🥉 Bronze Guardian<br>
+                                • 11–13 ตรา: 🥈 Silver Guardian<br>
+                                • 14–16 ตรา: 🥇 Gold Guardian<br>
+                                • 16+ + Reflection ครบ: 🏆 Grand Guardian
+                            </div>
+                        </div>
+                        
+                        <!-- Booklet Nav Controls -->
+                        <div class="booklet-nav">
+                            <button class="btn-booklet" id="btn-sp-prev" onclick="navBooklet('sp', -1)">ก่อนหน้า</button>
+                            <span style="font-size:0.75rem;color:#64748b;font-weight:600" id="sp-page-num">1/4</span>
+                            <button class="btn-booklet" id="btn-sp-next" onclick="navBooklet('sp', 1)">ถัดไป</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- T3: PROFILE SECTION -->
+            <div id="secProfile" class="app-section" style="display:none;">
+                <div class="section-title"><i class="fas fa-user-circle" style="color:var(--accent)"></i> จัดการโปรไฟล์ของฉัน</div>
+                
+                <div class="form-card" style="margin-bottom:20px;">
+                    <div class="form-group">
+                        <label>ชื่อทีมของกลุ่มคุณ (Team Name)</label>
+                        <input type="text" class="input" id="profTeamName" placeholder="เช่น สามทหารเสือ">
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:18px;">
+                        <div>
+                            <label style="display:block;text-align:center;font-size:0.75rem;color:var(--text2);margin-bottom:6px;">รูปตัวจริงคุณ</label>
+                            <div class="profile-upload-zone" onclick="triggerProfilePhoto('student')">
+                                <img id="imgStudentPhoto" class="profile-upload-zoneimg" style="display:none">
+                                <i class="fas fa-user"></i>
+                                <span>เลือกรูปถ่าย</span>
+                            </div>
+                            <input type="file" id="fileStudentPhoto" accept="image/*" style="display:none" onchange="onProfilePhotoSelected(this, 'student')">
+                        </div>
+                        <div>
+                            <label style="display:block;text-align:center;font-size:0.75rem;color:var(--text2);margin-bottom:6px;">รูปบัดดี้/คู่หู</label>
+                            <div class="profile-upload-zone" onclick="triggerProfilePhoto('buddy')">
+                                <img id="imgBuddyPhoto" class="profile-upload-zoneimg" style="display:none">
+                                <i class="fas fa-user-shield"></i>
+                                <span>เลือกรูปถ่าย</span>
+                            </div>
+                            <input type="file" id="fileBuddyPhoto" accept="image/*" style="display:none" onchange="onProfilePhotoSelected(this, 'buddy')">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>ชื่อ - นามสกุลจริง (คู่บัดดี้ของคุณ)</label>
+                        <select class="input" id="profBuddyName" onchange="onBuddySelectedChange()">
+                            <option value="">-- ไม่มีบัดดี้ / ไม่ระบุ --</option>
+                        </select>
+                        <input type="text" class="input" id="profBuddyNameCustom" style="margin-top:8px;display:none" placeholder="กรอกชื่อ-นามสกุลจริงของคู่บัดดี้...">
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อเล่น (คู่บัดดี้)</label>
+                        <input type="text" class="input" id="profBuddyNickname" placeholder="ชื่อเล่น">
+                    </div>
+                    <div class="form-group">
+                        <label>เบอร์โทรศัพท์ (คู่บัดดี้)</label>
+                        <input type="tel" class="input" id="profBuddyPhone" placeholder="เบอร์โทรคู่หู">
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="saveProfileChanges()">💾 บันทึกข้อมูลและรูปถ่าย</button>
+                </div>
+            </div>
+            
+            <!-- T4: SHOP SECTION -->
+            <div id="secShop" class="app-section" style="display:none;">
+                <div class="section-title"><i class="fas fa-store" style="color:var(--gold)"></i> ร้านค้าแลกของรางวัล</div>
+                
+                <!-- Display Student Available assets -->
+                <div style="background:var(--glass); border:1px solid var(--border); border-radius:12px; padding:15px; margin-bottom:20px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="font-size:0.9rem; font-weight:600; color:var(--text2); display:flex; justify-content:space-between; align-items:center;">
+                        <span>สะสม Points & Stamps ของคุณ:</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <!-- Drawing Passport Points -->
+                        <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:10px; text-align:center;">
+                            <div style="font-size:0.7rem; color:#818cf8; font-weight:600; text-transform:uppercase;">เขียนแบบเทคนิคเบื้องต้น</div>
+                            <div style="font-size:1.2rem; font-weight:700; color:#818cf8; margin-top:4px;">
+                                <i class="fas fa-star" style="color:#fbbf24"></i> <span id="shopDrawingPoints">0</span> แต้ม
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--text2); margin-top:2px;">
+                                <i class="fas fa-stamp" style="color:#ef4444"></i> <span id="shopDrawingStamps">0</span> ตราประทับ
+                            </div>
+                        </div>
+                        <!-- Safety Passport Points -->
+                        <div style="background:rgba(20,184,166,0.08); border:1px solid rgba(20,184,166,0.15); border-radius:8px; padding:10px; text-align:center;">
+                            <div style="font-size:0.7rem; color:#2dd4bf; font-weight:600; text-transform:uppercase;">ความปลอดภัยในสถานศึกษา</div>
+                            <div style="font-size:1.2rem; font-weight:700; color:#2dd4bf; margin-top:4px;">
+                                <i class="fas fa-star" style="color:#fbbf24"></i> <span id="shopSafetyPoints">0</span> แต้ม
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--text2); margin-top:2px;">
+                                <i class="fas fa-stamp" style="color:#ef4444"></i> <span id="shopSafetyStamps">0</span> ตราประทับ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Redemptions Area -->
+                <div id="shopActiveRedemptionsZone" style="display:none; margin-bottom:20px;">
+                    <div style="font-size:0.85rem; color:var(--gold); font-weight:600; margin-bottom:8px;"><i class="fas fa-ticket-alt"></i> รหัสแลกสิทธิ์ที่เปิดใช้งาน:</div>
+                    <div id="shopActiveRedemptionsList"></div>
+                </div>
+
+                <!-- Reward Cards -->
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    
+                    <!-- Reward 1: Pencil/Pen/Eraser -->
+                    <div style="background:var(--glass); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div style="flex:1;">
+                            <h3 style="font-size:1rem; font-weight:600; color:#fff; display:flex; align-items:center; gap:8px;">
+                                ✏️ ยืมดินสอ / ปากกา / ยางลบ
+                            </h3>
+                            <p style="font-size:0.8rem; color:var(--text2); margin-top:4px;">ใช้แลกสิทธิ์ยืมอุปกรณ์เครื่องเขียนในชั่วโมงเรียน</p>
+                            <div style="font-size:0.75rem; color:var(--gold); font-weight:600; margin-top:6px;">
+                                <i class="fas fa-star"></i> ใช้ 5 คะแนน
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; min-width:120px;">
+                            <button class="btn btn-primary btn-sm" style="font-size:0.75rem; padding:8px 12px;" onclick="redeemReward('borrow_tools', 'ยืมดินสอ/ปากกา/ยางลบ', 'drawing', 5, 0)">ใช้แต้มเขียนแบบฯ</button>
+                            <button class="btn btn-outline btn-sm" style="font-size:0.75rem; padding:8px 12px; background:rgba(20,184,166,0.12); color:#2dd4bf; border-color:rgba(20,184,166,0.25);" onclick="redeemReward('borrow_tools', 'ยืมดินสอ/ปากกา/ยางลบ', 'safety', 5, 0)">ใช้แต้มความปลอดภัยฯ</button>
+                        </div>
+                    </div>
+
+                    <!-- Reward 2: Battery Charge -->
+                    <div style="background:var(--glass); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div style="flex:1;">
+                            <h3 style="font-size:1rem; font-weight:600; color:#fff; display:flex; align-items:center; gap:8px;">
+                                🔋 ชาร์จแบตเตอรี่มือถือ (15 นาที)
+                            </h3>
+                            <p style="font-size:0.8rem; color:var(--text2); margin-top:4px;">ใช้สิทธิ์ชาร์จมือถือ ณ จุดบริการประจุไฟในห้องเรียน</p>
+                            <div style="font-size:0.75rem; color:var(--gold); font-weight:600; margin-top:6px;">
+                                <i class="fas fa-star"></i> ใช้ 10 คะแนน
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; min-width:120px;">
+                            <button class="btn btn-primary btn-sm" style="font-size:0.75rem; padding:8px 12px;" onclick="redeemReward('charge_battery', 'ชาร์จแบตเตอรี่มือถือ (15 นาที)', 'drawing', 10, 0)">ใช้แต้มเขียนแบบฯ</button>
+                            <button class="btn btn-outline btn-sm" style="font-size:0.75rem; padding:8px 12px; background:rgba(20,184,166,0.12); color:#2dd4bf; border-color:rgba(20,184,166,0.25);" onclick="redeemReward('charge_battery', 'ชาร์จแบตเตอรี่มือถือ (15 นาที)', 'safety', 10, 0)">ใช้แต้มความปลอดภัยฯ</button>
+                        </div>
+                    </div>
+
+                    <!-- Reward 3: Play Music -->
+                    <div style="background:var(--glass); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div style="flex:1;">
+                            <h3 style="font-size:1rem; font-weight:600; color:#fff; display:flex; align-items:center; gap:8px;">
+                                🎵 ขอเปิดเพลงท้ายคาบ (ช่วงเคลียร์งาน)
+                            </h3>
+                            <p style="font-size:0.8rem; color:var(--text2); margin-top:4px;">ใช้สิทธิ์เปิดเพลงที่ชื่นชอบช่วงทำงานในท้ายคาบ 1 ครั้ง</p>
+                            <div style="font-size:0.75rem; color:#ef4444; font-weight:600; margin-top:6px; display:flex; flex-direction:column; gap:6px;">
+                                <div><i class="fas fa-stamp"></i> สะสมตราประทับครบ 2 ดวง แลกได้ 1 ครั้ง</div>
+                                <div style="display:flex; gap:12px; font-size:0.7rem; color:var(--text2);">
+                                    <span>เขียนแบบฯ สิทธิ์สะสม: <strong id="musicDrawingChances" style="color:#818cf8">0</strong> ครั้ง</span>
+                                    <span>ความปลอดภัยฯ สิทธิ์สะสม: <strong id="musicSafetyChances" style="color:#2dd4bf">0</strong> ครั้ง</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; min-width:120px;">
+                            <button class="btn btn-primary btn-sm" style="font-size:0.75rem; padding:8px 12px; background:linear-gradient(135deg, #ef4444, #f43f5e); border:none;" onclick="redeemReward('play_music', 'เปิดเพลงท้ายคาบ (1 ครั้ง)', 'drawing', 0, 2)">ใช้สิทธิ์วิชาเขียนแบบฯ</button>
+                            <button class="btn btn-outline btn-sm" style="font-size:0.75rem; padding:8px 12px; background:rgba(20,184,166,0.12); color:#2dd4bf; border-color:rgba(20,184,166,0.25);" onclick="redeemReward('play_music', 'เปิดเพลงท้ายคาบ (1 ครั้ง)', 'safety', 0, 2)">ใช้สิทธิ์ความปลอดภัยฯ</button>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Transaction History Area -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; margin-top:20px; backdrop-filter:blur(20px);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="font-size:0.95rem; color:#fff; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-history" style="color:#fbbf24"></i> ประวัติการทำรายการของคุณ
+                        </h3>
+                        <button onclick="clearStudentHistory()" style="font-size:0.75rem; padding:4px 8px; color:#ef4444; border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.05); border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:4px; outline:none; transition: all 0.2s;"><i class="fas fa-trash-alt"></i> ล้างประวัติ</button>
+                    </div>
+                    <div id="studentShopHistoryList" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                        <div style="text-align:center; color:var(--text2); font-size:0.8rem; padding:10px;">ไม่มีประวัติการทำรายการ</div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- App Navigation Bar -->
+        <div class="app-nav">
+            <button class="nav-tab active" id="tabBoards" onclick="switchMainTab('boards')">
+                <i class="fas fa-chalkboard"></i> ส่งงาน
+            </button>
+            <button class="nav-tab" id="tabPassports" onclick="switchMainTab('passports')">
+                <i class="fas fa-passport"></i> พาสปอร์ต
+            </button>
+            <button class="nav-tab" id="tabShop" onclick="switchMainTab('shop')">
+                <i class="fas fa-store"></i> ร้านค้า
+            </button>
+            <button class="nav-tab" id="tabProfile" onclick="switchMainTab('profile')">
+                <i class="fas fa-user-circle"></i> โปรไฟล์
+            </button>
+        </div>
+    </div>
+    
+</div>
+
+<!-- assignment posts / submission modal -->
+<div class="assignment-list-modal" id="modalAssignments">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="boardModalTitle">บอร์ด</h3>
+            <button style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer" onclick="closeBoardModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" id="boardModalBody">
+            <!-- Content loaded via JS -->
+        </div>
+    </div>
+</div>
+
+<div class="assignment-list-modal" id="modalBuddyConfirm">
+    <div class="modal-content" style="max-width: 380px; text-align: center; justify-content: center; align-items: center;">
+        <div style="font-size: 3rem; color: #fbbf24; margin-bottom: 15px;"><i class="fas fa-question-circle"></i></div>
+        <h3 style="color:#fff; margin-bottom:12px;">ยืนยันคู่บัดดี้</h3>
+        <p id="buddyConfirmText" style="color:var(--text2); font-size:0.9rem; margin-bottom:20px; line-height:1.5;"></p>
+        <div style="display:flex; gap:12px; width:100%;">
+            <button class="btn btn-primary" id="buddyConfirmYesBtn" style="flex:1;">ใช่, นี่คู่หูของฉัน</button>
+            <button class="btn" onclick="cancelBuddySelection()" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text)">ไม่ใช่</button>
+        </div>
+    </div>
+</div>
+
+<div class="assignment-list-modal" id="modalShopConfirm">
+    <div class="modal-content" style="max-width: 380px; text-align: center; justify-content: center; align-items: center;">
+        <div style="font-size: 3rem; color: var(--gold); margin-bottom: 15px;"><i class="fas fa-gift"></i></div>
+        <h3 style="color:#fff; margin-bottom:12px;">ยืนยันการแลกของรางวัล</h3>
+        <p id="shopConfirmText" style="color:var(--text2); font-size:0.95rem; margin-bottom:20px; line-height:1.6; white-space:pre-wrap;"></p>
+        <div style="display:flex; gap:12px; width:100%;">
+            <button class="btn btn-primary" id="shopConfirmYesBtn" style="flex:1;">แลกของรางวัล</button>
+            <button class="btn" onclick="closeShopConfirmModal()" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text)">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="assignment-list-modal" id="modalStudentConfirm" style="display:none;">
+    <div class="modal-content" style="max-width: 380px; text-align: center; justify-content: center; align-items: center;">
+        <div id="stuConfirmIcon" style="font-size: 3rem; color: #ef4444; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 id="stuConfirmTitle" style="color:#fff; margin-bottom:12px;">ล้างประวัติ?</h3>
+        <p id="stuConfirmText" style="color:var(--text2); font-size:0.95rem; margin-bottom:20px; line-height:1.6; white-space:pre-wrap;"></p>
+        <div style="display:flex; gap:12px; width:100%;">
+            <button class="btn btn-primary" id="stuConfirmYesBtn" style="flex:1; background:#ef4444; border-color:#ef4444; color:#fff;">ใช่, ล้างประวัติ</button>
+            <button class="btn" id="stuConfirmNoBtn" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text)">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-msg" id="toastMsg">
+    <i class="fas fa-check-circle" style="color:var(--primary)" id="toastIcon"></i>
+    <span id="toastText">บันทึกเรียบร้อย</span>
+</div>
+
+<script type="module">
+import { supabase, signInAnonymously, registerStudent, getStudentByPhone, uploadProfilePhoto, uploadAssignmentPhoto, getRecord, upsertRecord, updateRecord, getDoc, setDoc, updateDoc, deleteDoc } from "./supabase-client.js";
+
+function promiseWithTimeout(promise, ms, timeoutError = new Error('Timeout')) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(timeoutError), ms))
+    ]);
+}
+
+function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}
+
+let isAuthReady = false;
+let studentUser = null;
+let isStorageOffline = false;
+let currentActiveMainTab = 'boards';
+let currentActivePassportType = 'drawing';
+
+// Cache for profile photos to prevent redundant reads
+let studentPhotosCache = null;
+
+// Pages indices for booklets
+let dpPageIndex = 1;
+let spPageIndex = 1;
+
+// Charts instances
+let dpChart = null;
+let spChart = null;
+
+async function initAuth() {
+  try {
+    await signInAnonymously();
+    console.log('🔐 Anonymous login with Supabase');
+    isAuthReady = true;
+    checkLocalSession();
+  } catch (e) {
+    showToast('เชื่อมต่อ Supabase ไม่สำเร็จ: ' + e.message, false);
+  }
+}
+initAuth();
+
+function showToast(msg, isSuccess = true) {
+    const el = document.getElementById('toastMsg');
+    const txt = document.getElementById('toastText');
+    const icon = document.getElementById('toastIcon');
+    txt.textContent = msg;
+    icon.className = isSuccess ? 'fas fa-check-circle' : 'fas fa-times-circle';
+    icon.style.color = isSuccess ? 'var(--primary)' : 'var(--stamp-red)';
+    el.classList.add('active');
+    setTimeout(() => el.classList.remove('active'), 2500);
+}
+
+// ────────────────────────────────────────────────────────────────
+// AUTHENTICATION AND MASTER DATA
+// ────────────────────────────────────────────────────────────────
+
+window.switchAuthTab = function(type, event) {
+    const evt = event || window.event;
+    document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
+    if (evt && evt.target) evt.target.classList.add('active');
+    if (type === 'login') {
+        document.getElementById('authLoginZone').style.display = 'block';
+        document.getElementById('authRegisterZone').style.display = 'none';
+    } else {
+        document.getElementById('authLoginZone').style.display = 'none';
+        document.getElementById('authRegisterZone').style.display = 'block';
+    }
+};
+
+window.loadClassroomNames = async function() {
+    const room = document.getElementById('regClassroom').value;
+    const nameSelect = document.getElementById('regName');
+    nameSelect.innerHTML = '<option value="">-- กำลังโหลดรายชื่อ... --</option>';
+    if (!room) {
+        nameSelect.innerHTML = '<option value="">-- เลือกห้องเรียนก่อน --</option>';
+        return;
+    }
+    
+    try {
+        const safeRoom = room.replace(/[.#$\[\]\/]/g, '_');
+        const data = await getDoc('students_master', safeRoom);
+        if (!data) {
+            nameSelect.innerHTML = '<option value="">-- ไม่มีรายชื่อในห้องนี้ --</option>';
+            return;
+        }
+        let options = '<option value="">-- เลือกชื่อจริงของคุณ --</option>';
+        Object.keys(data).forEach(key => {
+            const student = data[key];
+            if (!student.registered) {
+                options += `<option value="${key}">${key.replace(/_/g, ' ')}</option>`;
+            }
+        });
+        nameSelect.innerHTML = options;
+    } catch(e) {
+        nameSelect.innerHTML = '<option value="">-- เกิดข้อผิดพลาดโหลดรายชื่อ --</option>';
+    }
+};
+
+window.doRegister = async function() {
+    const room = document.getElementById('regClassroom').value;
+    const keyName = document.getElementById('regName').value;
+    const phone = document.getElementById('regPhone').value.trim();
+    
+    if (!room || !keyName || !phone) {
+        showToast('กรุณากรอกข้อมูลให้ครบถ้วนครับ', false);
+        return;
+    }
+    if (phone.length < 9) {
+        showToast('กรุณากรอกเบอร์โทรที่ถูกต้องครับ', false);
+        return;
+    }
+    
+    try {
+        const safeRoom = room.replace(/[.#$\[\]\/]/g, '_');
+        // Double check student isn't already registered
+        const roomData = await getDoc('students_master', safeRoom);
+        const masterStudent = roomData ? roomData[keyName] : null;
+        if (masterStudent && masterStudent.registered) {
+            showToast('รายชื่อนี้มีผู้ลงทะเบียนแล้วครับ', false);
+            return;
+        }
+        
+        // Double check phone number isn't in use
+        const existingUser = await getDoc('users', phone);
+        if (existingUser) {
+            showToast('เบอร์โทรศัพท์นี้ถูกใช้งานแล้วครับ', false);
+            return;
+        }
+        
+        // Create user session
+        const studentInfo = {
+            name: keyName.replace(/_/g, ' '),
+            classroom: room,
+            phone: phone,
+            registeredAt: Date.now()
+        };
+        
+        await setDoc('users', phone, studentInfo);
+        
+        // Also register in the relational students table
+        await registerStudent({
+            firstName: studentInfo.name.split(' ')[0] || '',
+            lastName: studentInfo.name.split(' ')[1] || '',
+            nickname: '',
+            phone: phone,
+            classroom: room
+        });
+        
+        if (roomData) {
+            roomData[keyName] = { registered: true, phone: phone };
+            await setDoc('students_master', safeRoom, roomData);
+        }
+        
+        // Initialize 2 subject passports!
+        const initDrawing = {
+            firstName: studentInfo.name.split(' ')[0] || '',
+            lastName: studentInfo.name.split(' ')[1] || '',
+            className: room,
+            phone: phone,
+            points: 0,
+            history: [{
+                type: 'plus',
+                amount: 0,
+                reason: 'สร้างบัญชีพาสปอร์ตสำหรับสะสมแต้มเขียนแบบ',
+                date: new Date().toLocaleDateString('th-TH')
+            }],
+            challenges: {},
+            reflection: '',
+            dateJoined: new Date().toISOString(),
+            teamName: '',
+            photoUrl: ''
+        };
+        
+        const initSafety = {
+            firstName: studentInfo.name.split(' ')[0] || '',
+            lastName: studentInfo.name.split(' ')[1] || '',
+            className: room,
+            phone: phone,
+            points: 0,
+            history: [{
+                type: 'plus',
+                amount: 0,
+                reason: 'สร้างบัญชีพาสปอร์ตสำหรับสะสมแต้มความปลอดภัย',
+                date: new Date().toLocaleDateString('th-TH')
+            }],
+            challenges: {},
+            reflection: '',
+            dateJoined: new Date().toISOString(),
+            teamName: '',
+            photoUrl: ''
+        };
+        
+        await setDoc('passports', phone, initDrawing);
+        await setDoc('safety_passports', phone, initSafety);
+        
+        showToast('ลงทะเบียนบัญชีสำเร็จ! ยินดีต้อนรับครับ');
+        loginSuccess(studentInfo);
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการลงทะเบียน: ' + e.message, false);
+    }
+};
+
+window.doLogin = async function() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    if (!phone) {
+        showToast('กรุณากรอกเบอร์โทรศัพท์ด้วยครับ', false);
+        return;
+    }
+    
+    try {
+        const studentInfo = await getDoc('users', phone);
+        if (!studentInfo) {
+            showToast('ไม่พบเบอร์โทรศัพท์นี้ในระบบ', false);
+            return;
+        }
+        showToast('เข้าสู่ระบบสำเร็จ! สวัสดีครับ');
+        loginSuccess(studentInfo);
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการเข้าสู่ระบบ', false);
+    }
+};
+
+function checkLocalSession() {
+    const saved = localStorage.getItem('cb_student_session');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            loginSuccess(data);
+        } catch {
+            localStorage.removeItem('cb_student_session');
+        }
+    }
+}
+
+function loginSuccess(studentInfo) {
+    studentUser = studentInfo;
+    localStorage.setItem('cb_student_session', JSON.stringify(studentInfo));
+    
+    document.getElementById('screenAuth').classList.remove('active');
+    document.getElementById('screenApp').classList.add('active');
+    
+    // Render profiles & fetch dashboards
+    document.getElementById('avatarName').innerText = studentInfo.name.charAt(0);
+    document.getElementById('profileNameDisplay').innerText = studentInfo.name;
+    document.getElementById('profileClassDisplay').innerText = studentInfo.classroom;
+    
+    // Load student and buddy details into profile fields
+    loadProfileDetails();
+    
+    // Load active boards
+    listenToStudentBoards();
+    
+    // Sync Passports Realtime
+    listenToPassports();
+    
+    // Sync Redemptions Realtime
+    listenToStudentRedemptions();
+}
+
+window.logoutStudent = function() {
+    localStorage.removeItem('cb_student_session');
+    location.reload();
+};
+
+// ────────────────────────────────────────────────────────────────
+// PROFILE MANAGEMENT (TEAM, BUDDY, PHOTOS)
+// ────────────────────────────────────────────────────────────────
+
+async function loadProfileDetails() {
+    if (!studentUser) return;
+    try {
+        await loadProfileClassmates();
+        
+        const p = await getDoc('passports', studentUser.phone);
+        if (p) {
+            document.getElementById('profTeamName').value = p.teamName || '';
+            if (p.buddy) {
+                const bName = p.buddy.fullName || '';
+                lastConfirmedBuddyName = bName;
+                
+                const select = document.getElementById('profBuddyName');
+                let exists = false;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === bName) {
+                        exists = true;
+                        break;
+                    }
+                }
+                
+                if (exists || bName === "") {
+                    select.value = bName;
+                    document.getElementById('profBuddyNameCustom').style.display = 'none';
+                    document.getElementById('profBuddyNameCustom').value = '';
+                } else {
+                    select.value = '__custom__';
+                    document.getElementById('profBuddyNameCustom').style.display = 'block';
+                    document.getElementById('profBuddyNameCustom').value = bName;
+                }
+                
+                document.getElementById('profBuddyNickname').value = p.buddy.nickname || '';
+                document.getElementById('profBuddyPhone').value = p.buddy.phone || '';
+            }
+        }
+        
+        // Load Photos from passport_photos
+        const ph = await getDoc('passport_photos', studentUser.phone);
+        if (ph) {
+            studentPhotosCache = ph;
+            if (ph.student) {
+                document.getElementById('imgStudentPhoto').src = ph.student;
+                document.getElementById('imgStudentPhoto').style.display = 'block';
+            }
+            if (ph.buddy) {
+                document.getElementById('imgBuddyPhoto').src = ph.buddy;
+                document.getElementById('imgBuddyPhoto').style.display = 'block';
+            }
+        }
+    } catch(e) {
+        console.error("Error loading profile details:", e);
+    }
+}
+
+window.triggerProfilePhoto = function(who) {
+    if (who === 'student') document.getElementById('fileStudentPhoto').click();
+    else document.getElementById('fileBuddyPhoto').click();
+};
+
+window.onProfilePhotoSelected = function(input, who) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // Compress Image directly (Canvas)
+            const maxW = 320;
+            const scale = Math.min(maxW / img.width, 1);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+            
+            // Show preview
+            const targetImg = who === 'student' ? 'imgStudentPhoto' : 'imgBuddyPhoto';
+            document.getElementById(targetImg).src = compressedBase64;
+            document.getElementById(targetImg).style.display = 'block';
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+window.saveProfileChanges = async function() {
+    if (!studentUser) return;
+    
+    const btn = document.querySelector('button[onclick="saveProfileChanges()"]');
+    let originalText = "";
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึกและอัปโหลดรูปภาพ...';
+    }
+    
+    const teamName = document.getElementById('profTeamName').value.trim();
+    let buddyName = document.getElementById('profBuddyName').value.trim();
+    if (buddyName === '__custom__') {
+        buddyName = document.getElementById('profBuddyNameCustom').value.trim();
+    }
+    const buddyNick = document.getElementById('profBuddyNickname').value.trim();
+    const buddyPhone = document.getElementById('profBuddyPhone').value.trim();
+    
+    const studentPhoto = document.getElementById('imgStudentPhoto').src;
+    const buddyPhoto = document.getElementById('imgBuddyPhoto').src;
+    
+    try {
+        const photosPayload = {};
+        let studentPhotoUrl = studentPhoto;
+        let buddyPhotoUrl = buddyPhoto;
+        
+        const uploadPromises = [];
+        
+        if (studentPhoto && studentPhoto.startsWith('data:image')) {
+            uploadPromises.push((async () => {
+                try {
+                    const url = await uploadProfilePhoto(studentPhoto, `${studentUser.phone}_student.jpg`);
+                    studentPhotoUrl = url;
+                    photosPayload.student = studentPhotoUrl;
+                } catch (uploadErr) {
+                    console.warn("Student profile photo upload failed, using base64 fallback:", uploadErr);
+                    photosPayload.student = studentPhoto;
+                }
+            })());
+        }
+        
+        if (buddyPhoto && buddyPhoto.startsWith('data:image')) {
+            uploadPromises.push((async () => {
+                try {
+                    const url = await uploadProfilePhoto(buddyPhoto, `${studentUser.phone}_buddy.jpg`);
+                    buddyPhotoUrl = url;
+                    photosPayload.buddy = buddyPhotoUrl;
+                } catch (uploadErr) {
+                    console.warn("Buddy profile photo upload failed, using base64 fallback:", uploadErr);
+                    photosPayload.buddy = buddyPhoto;
+                }
+            })());
+        }
+        
+        if (uploadPromises.length > 0) {
+            await Promise.all(uploadPromises);
+        }
+        
+        if (Object.keys(photosPayload).length > 0) {
+            await updateDoc('passport_photos', studentUser.phone, photosPayload);
+            if (!studentPhotosCache) studentPhotosCache = {};
+            Object.assign(studentPhotosCache, photosPayload);
+        }
+        
+        // Build buddy payload
+        const buddy = {
+            fullName: buddyName,
+            nickname: buddyNick,
+            phone: buddyPhone,
+            photoUrl: (buddyPhotoUrl && (buddyPhotoUrl.startsWith('http') || buddyPhotoUrl.startsWith('data:image'))) ? buddyPhotoUrl : ''
+        };
+        
+        // Sync payload to relational buddies table
+        try {
+            await updateBuddyInfo(studentUser.phone, buddy);
+        } catch (buddySqlErr) {
+            console.error("Relational buddy update failed:", buddySqlErr);
+        }
+        
+        // Sync payload to both passports!
+        const drawingUpdate = { teamName, buddy };
+        const safetyUpdate = { teamName, buddy };
+        
+        await updateDoc('passports', studentUser.phone, drawingUpdate);
+        await updateDoc('safety_passports', studentUser.phone, safetyUpdate);
+        
+        showToast('💾 อัปเดตข้อมูลโปรไฟล์และบัดดี้เรียบร้อยครับ!');
+        // Reload passports
+        listenToPassports();
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + e.message, false);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+};
+
+let classroomClassmatesList = {};
+let lastConfirmedBuddyName = "";
+
+async function loadProfileClassmates() {
+    if (!studentUser) return;
+    try {
+        const safeRoom = studentUser.classroom.replace(/[.#$\[\]\/]/g, '_');
+        const classmatesData = await getDoc('students_master', safeRoom);
+        const buddySelect = document.getElementById('profBuddyName');
+        buddySelect.innerHTML = '<option value="">-- ไม่มีบัดดี้ / ไม่ระบุ --</option>';
+        
+        if (classmatesData) {
+            classroomClassmatesList = classmatesData;
+            let options = '<option value="">-- ไม่มีบัดดี้ / ไม่ระบุ --</option>';
+            Object.keys(classroomClassmatesList).forEach(key => {
+                const realName = key.replace(/_/g, ' ');
+                if (realName.trim() !== studentUser.name.trim()) {
+                    options += `<option value="${realName}">${realName}</option>`;
+                }
+            });
+            options += '<option value="__custom__">✍️ ระบุชื่อด้วยตนเอง (พิมพ์ชื่อเอง)</option>';
+            buddySelect.innerHTML = options;
+        } else {
+            let options = '<option value="">-- ไม่มีบัดดี้ / ไม่ระบุ --</option>';
+            options += '<option value="__custom__">✍️ ระบุชื่อด้วยตนเอง (พิมพ์ชื่อเอง)</option>';
+            buddySelect.innerHTML = options;
+        }
+    } catch (e) {
+        console.error("Error loading classmates for profile:", e);
+    }
+}
+
+window.onBuddySelectedChange = function() {
+    const select = document.getElementById('profBuddyName');
+    const selectedVal = select.value;
+    
+    if (selectedVal === '__custom__') {
+        document.getElementById('profBuddyNameCustom').style.display = 'block';
+        document.getElementById('profBuddyNameCustom').value = '';
+        lastConfirmedBuddyName = '__custom__';
+        return;
+    }
+    
+    document.getElementById('profBuddyNameCustom').style.display = 'none';
+    document.getElementById('profBuddyNameCustom').value = '';
+    
+    if (!selectedVal) {
+        lastConfirmedBuddyName = "";
+        document.getElementById('profBuddyNickname').value = "";
+        document.getElementById('profBuddyPhone').value = "";
+        return;
+    }
+    
+    document.getElementById('buddyConfirmText').innerText = `คุณมั่นใจใช่หรือไม่ว่า\n"${selectedVal}"\nคือคู่บัดดี้ของคุณ?`;
+    const yesBtn = document.getElementById('buddyConfirmYesBtn');
+    
+    yesBtn.onclick = function() {
+        lastConfirmedBuddyName = selectedVal;
+        document.getElementById('modalBuddyConfirm').classList.remove('active');
+        showToast('🔗 เลือกคู่หูสำเร็จ!');
+        
+        const safeKey = selectedVal.replace(/ /g, '_');
+        const classmateData = classroomClassmatesList[safeKey];
+        if (classmateData) {
+            if (classmateData.phone) {
+                document.getElementById('profBuddyPhone').value = classmateData.phone;
+                getDoc('passports', classmateData.phone).then(p => {
+                    if (p && p.firstName) {
+                        document.getElementById('profBuddyNickname').value = p.firstName;
+                    }
+                });
+            }
+        }
+    };
+    
+    document.getElementById('modalBuddyConfirm').classList.add('active');
+};
+
+window.cancelBuddySelection = function() {
+    const select = document.getElementById('profBuddyName');
+    select.value = lastConfirmedBuddyName;
+    if (lastConfirmedBuddyName === '__custom__') {
+        document.getElementById('profBuddyNameCustom').style.display = 'block';
+    } else {
+        document.getElementById('profBuddyNameCustom').style.display = 'none';
+    }
+    document.getElementById('modalBuddyConfirm').classList.remove('active');
+};
+
+// ────────────────────────────────────────────────────────────────
+// MY ASSIGNMENTS / SUBMIT WORK BOARDS
+// ────────────────────────────────────────────────────────────────
+
+let allStudentBoards = {};
+async function listenToStudentBoards() {
+    if (!studentUser) return;
+    try {
+        const { data, error } = await supabase
+            .from('classboard_kv')
+            .select('*')
+            .eq('collection', 'boards_index');
+        if (error) throw error;
+        
+        allStudentBoards = {};
+        if (data) {
+            data.forEach(row => {
+                allStudentBoards[row.doc_id] = row.data;
+            });
+        }
+        renderStudentBoards();
+    } catch (e) {
+        console.error("Error loading boards:", e);
+    }
+    
+    supabase.channel('boards_index_changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'classboard_kv',
+                filter: 'collection=eq.boards_index'
+            },
+            async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('classboard_kv')
+                        .select('*')
+                        .eq('collection', 'boards_index');
+                    if (error) throw error;
+                    
+                    allStudentBoards = {};
+                    if (data) {
+                        data.forEach(row => {
+                            allStudentBoards[row.doc_id] = row.data;
+                        });
+                    }
+                    renderStudentBoards();
+                } catch (err) {
+                    console.error("Error updating boards on realtime change:", err);
+                }
+            }
+        )
+        .subscribe();
+}
+
+function renderStudentBoards() {
+    const grid = document.getElementById('studentBoardsGrid');
+    const ids = Object.keys(allStudentBoards);
+    if (!ids.length) {
+        grid.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px">ไม่มีกระดานสั่งงานในระบบ</p>';
+        return;
+    }
+    
+    grid.innerHTML = ids.map(id => {
+        const b = allStudentBoards[id];
+        const sub = b.subjectType || 'general';
+        const subName = sub === 'drawing' ? 'เขียนแบบเทคนิคเบื้องต้น' : (sub === 'safety' ? 'ความปลอดภัย' : 'ทั่วไป');
+        
+        return `<div class="board-card" onclick="openBoardAssignments('${id}')">
+            <div class="board-name">${b.name} <span class="board-subject-badge bsb-${sub}">${subName}</span></div>
+            <div class="board-owner"><i class="fas fa-user-circle"></i> ครูผู้สอน: ${b.createdBy || 'ทั่วไป'}</div>
+        </div>`;
+    }).join('');
+}
+
+let activeBoardId = null;
+let activeClassroomIndex = 0;
+let activeAssignmentIndex = 0;
+
+window.openBoardAssignments = async function(boardId) {
+    activeBoardId = boardId;
+    try {
+        const b = await getDoc('boards', boardId);
+        if (!b) return;
+        
+        document.getElementById('boardModalTitle').innerText = b.name;
+        
+        // Find which classroom in board matches student's classroom
+        let matchingClassIndex = -1;
+        if (b.classrooms) {
+            matchingClassIndex = b.classrooms.findIndex(c => c.name.trim() === studentUser.classroom.trim());
+        }
+        
+        const container = document.getElementById('boardModalBody');
+        if (matchingClassIndex === -1) {
+            container.innerHTML = `<p style="color:var(--text2);text-align:center;padding:20px">บอร์ดนี้ไม่มีเปิดรับการส่งงานสำหรับห้อง ${studentUser.classroom}</p>`;
+            document.getElementById('modalAssignments').classList.add('active');
+            return;
+        }
+        
+        activeClassroomIndex = matchingClassIndex;
+        const cls = b.classrooms[matchingClassIndex];
+        const assignments = cls.assignments || [];
+        
+        if (!assignments.length) {
+            container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px">ห้องนี้ยังไม่มีใบงานมอบหมาย</p>';
+        } else {
+            container.innerHTML = assignments.map((a, index) => {
+                const posts = a.posts || [];
+                const studentPost = posts.find(p => p.studentPhone === studentUser.phone);
+                let statusHtml = '<span class="post-status status-pending" style="background:rgba(255,255,255,0.06);color:var(--text2)">ยังไม่ส่งงาน</span>';
+                if (studentPost) {
+                    statusHtml = studentPost.isGraded 
+                        ? '<span class="post-status status-graded">🟢 ตรวจแล้ว</span>' 
+                        : '<span class="post-status status-pending">🟡 รอตรวจ</span>';
+                }
+                
+                return `<div class="assignment-card" onclick="openSubmitWork(${index})">
+                    <div style="display:flex;justify-content:between;align-items:center;margin-bottom:8px">
+                        <strong style="color:var(--primary)">${a.name}</strong>
+                        ${statusHtml}
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--text2)">${a.desc || 'ไม่มีรายละเอียดใบงาน'}</div>
+                </div>`;
+            }).join('');
+        }
+        
+        document.getElementById('modalAssignments').classList.add('active');
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการโหลดใบงาน', false);
+    }
+};
+
+window.closeBoardModal = function() {
+    document.getElementById('modalAssignments').classList.remove('active');
+};
+
+window.openSubmitWork = async function(asgnIndex) {
+    activeAssignmentIndex = asgnIndex;
+    postFilesBase64 = [];
+    postLargeFileLink = null;
+    
+    try {
+        const b = await getDoc('boards', activeBoardId);
+        if (!b) return;
+        const a = b.classrooms[activeClassroomIndex].assignments[asgnIndex];
+        
+        const container = document.getElementById('boardModalBody');
+        const posts = a.posts || [];
+        const studentPost = posts.find(p => p.studentPhone === studentUser.phone);
+        
+        const isSubmitted = !!studentPost;
+        const isGraded = studentPost && studentPost.isGraded === true;
+        const allowEdit = studentPost && studentPost.allowEdit === true;
+        const isLocked = isSubmitted && !allowEdit;
+        
+        if (studentPost && studentPost.attachments) {
+            studentPost.attachments.forEach(att => {
+                if (att.startsWith('data:image') || att.includes('firebasestorage.googleapis.com') || att.includes('supabase.co')) {
+                    postFilesBase64.push(att);
+                } else {
+                    postLargeFileLink = att;
+                }
+            });
+        }
+        
+        let existingHtml = '';
+        if (studentPost) {
+            let fileHtml = '';
+            if (studentPost.attachments && studentPost.attachments.length > 0) {
+                fileHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">';
+                studentPost.attachments.forEach(att => {
+                    if (att.startsWith('data:image') || att.includes('firebasestorage.googleapis.com') || att.includes('supabase.co')) {
+                        fileHtml += `<img src="${att}" style="max-width:100%;max-height:100px;border-radius:6px;border:1px solid var(--border);">`;
+                    } else {
+                        fileHtml += `<a href="${att}" target="_blank" class="btn-link-action" style="font-size:0.75rem;color:#818cf8;display:block;"><i class="fas fa-external-link-alt"></i> เปิดไฟล์แนบใหญ่</a>`;
+                    }
+                });
+                fileHtml += '</div>';
+            }
+            
+            let editActionHtml = '';
+            if (isLocked) {
+                editActionHtml = `
+                <div style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:8px; padding:12px; text-align:center; color:#fbbf24; font-size:0.8rem; font-weight:500; width:100%; box-sizing:border-box; margin-top:12px; line-height:1.4;">
+                    <i class="fas fa-lock" style="margin-right:6px;"></i> <strong>งานส่งถูกล็อกแล้ว ${isGraded ? '(ตรวจคะแนนแล้ว)' : '(ส่งเข้าระบบแล้ว)'}</strong><br>
+                    <span style="font-size:0.7rem; opacity:0.85;">ไม่สามารถแก้ไขเพิ่มเติมได้ หากจำเป็นต้องแก้ไข กรุณาแจ้งคุณครูเพื่อขอปลดล็อกระบบตรวจงาน</span>
+                </div>`;
+            } else {
+                editActionHtml = `
+                <button class="btn btn-outline btn-sm" onclick="showSubmissionEditForm()" style="margin-top:12px; width:100%; border-color:#fbbf24; color:#fbbf24; background:rgba(245,158,11,0.06); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600;">
+                    <i class="fas fa-pencil-alt"></i> ✏️ คลิกดินสอเพื่อแก้ไขใบงานชิ้นนี้
+                </button>`;
+            }
+            
+            existingHtml = `<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
+                <div style="font-size:0.85rem;color:var(--primary);font-weight:600">งานที่ส่งแล้วของคุณ:</div>
+                <div style="font-size:0.85rem;margin-top:4px"><strong>หัวข้อ:</strong> ${studentPost.title}</div>
+                <div style="font-size:0.8rem;color:var(--text2)"><strong>ข้อความ:</strong> ${studentPost.desc || '-'}</div>
+                ${fileHtml}
+                ${editActionHtml}
+            </div>`;
+        }
+        
+        container.innerHTML = `
+            <button class="btn btn-outline btn-sm" onclick="openBoardAssignments('${activeBoardId}')" style="margin-bottom:12px;width:auto"><i class="fas fa-arrow-left"></i> กลับ</button>
+            <h4 style="color:var(--primary);margin-bottom:6px">${a.name}</h4>
+            <p style="font-size:0.8rem;color:var(--text2);margin-bottom:14px">${a.desc || ''}</p>
+            
+            ${existingHtml}
+            
+            <div class="submit-work-card" id="submitWorkFormCard" style="${isSubmitted ? 'display:none; margin-top:16px;' : 'margin-top:16px;'}">
+                <div style="font-weight:600;font-size:0.9rem;margin-bottom:12px;color:var(--primary)">
+                    <i class="fas ${isLocked ? 'fa-lock' : 'fa-paper-plane'}"></i> ${isLocked ? 'ข้อมูลการส่งงานถูกล็อก' : 'แก้ไข / ส่งคำตอบของคุณ'}
+                </div>
+                
+                <div class="form-group">
+                    <label>หัวข้องานที่ส่ง</label>
+                    <input type="text" class="input" id="postTitle" placeholder="เช่น ส่งใบงานสัปดาห์ที่ 1" value="${studentPost ? studentPost.title : ''}" ${isLocked ? 'disabled style="background:rgba(255,255,255,0.02);color:var(--text2);cursor:not-allowed;"' : ''}>
+                </div>
+                <div class="form-group">
+                    <label>คำอธิบายเพิ่มเติม (คำตอบ/บันทึก)</label>
+                    <textarea class="input" id="postDesc" style="min-height:70px;resize:none;${isLocked ? 'background:rgba(255,255,255,0.02);color:var(--text2);cursor:not-allowed;' : ''}" placeholder="กรอกคำอธิบายหรือคำตอบ..." ${isLocked ? 'disabled' : ''}>${studentPost ? studentPost.desc : ''}</textarea>
+                </div>
+                
+                ${isLocked ? `
+                    <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:8px; padding:14px; text-align:center; color:#fbbf24; font-size:0.85rem; font-weight:500; width: 100%; box-sizing:border-box; line-height:1.4;">
+                        <i class="fas fa-lock" style="margin-right:6px; font-size:1rem;"></i> <strong>${isGraded ? 'งานนี้ได้รับการตรวจแล้ว ไม่อนุญาตให้แก้ไข' : 'ส่งงานเรียบร้อยแล้ว ไม่อนุญาตให้แก้ไข'}</strong> <br>
+                        <span style="font-size:0.75rem; opacity:0.8; display:block; margin-top:4px;">หากต้องการแก้ไขเพิ่มเติม กรุณาแจ้งคุณครูให้ยกเลิกการตรวจงานก่อนเพื่อปลดล็อกระบบ</span>
+                    </div>
+                ` : `
+                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+                        <button class="btn-large-file" onclick="triggerPostCameraFile()"><i class="fas fa-camera"></i> ถ่ายรูปจากกล้อง</button>
+                        <button class="btn-large-file" onclick="triggerPostFile()"><i class="fas fa-image"></i> เลือกรูปจากคลังภาพ</button>
+                        <button class="btn-large-file" onclick="promptLargeFile()"><i class="fas fa-link"></i> แนบลิงก์ Google Drive</button>
+                        <input type="file" id="postFile" accept="image/*" style="display:none" onchange="onPostFileSelected(this)" multiple>
+                        <input type="file" id="postCameraFile" accept="image/*" capture="environment" style="display:none" onchange="onPostFileSelected(this)">
+                    </div>
+                    
+                    <div id="largeFileLinkDisplay" style="font-size:0.75rem;color:#818cf8;margin-bottom:10px;word-break:break-all"></div>
+                    <div id="postImgPreviewContainer" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;"></div>
+                    
+                    <button class="btn btn-primary" id="btnSubmitPost" style="margin-top:10px" onclick="submitPost()">🚀 ยืนยันการส่งงาน</button>
+                `}
+            </div>
+        `;
+        
+        if (!isLocked) {
+            renderPostImgPreview();
+        }
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาด', false);
+    }
+};
+
+window.showSubmissionEditForm = function() {
+    const card = document.getElementById('submitWorkFormCard');
+    if (card) {
+        card.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        renderPostImgPreview();
+    }
+};
+
+let postFilesBase64 = [];
+let postLargeFileLink = null;
+
+window.triggerPostFile = function() {
+    const el = document.getElementById('postFile');
+    if (el) el.click();
+};
+
+window.triggerPostCameraFile = function() {
+    const el = document.getElementById('postCameraFile');
+    if (el) el.click();
+};
+
+window.promptLargeFile = function() {
+    const link = prompt("วาง URL ลิงก์ไฟล์งานขนาดใหญ่ของคุณ (เช่น Google Drive, YouTube, etc.)");
+    if (link) {
+        postLargeFileLink = link;
+        renderPostImgPreview();
+    }
+};
+
+window.removeLargeFileLink = function() {
+    postLargeFileLink = null;
+    renderPostImgPreview();
+};
+
+window.renderPostImgPreview = function() {
+    const container = document.getElementById('postImgPreviewContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    postFilesBase64.forEach((src, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.width = '80px';
+        wrapper.style.height = '80px';
+        wrapper.style.marginRight = '8px';
+        wrapper.style.marginBottom = '8px';
+        
+        const imgEl = document.createElement('img');
+        imgEl.src = src;
+        imgEl.style.width = '100%';
+        imgEl.style.height = '100%';
+        imgEl.style.borderRadius = '6px';
+        imgEl.style.objectFit = 'cover';
+        imgEl.style.border = '1px solid var(--border)';
+        wrapper.appendChild(imgEl);
+        
+        // Red close button
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '<i class="fas fa-times"></i>';
+        delBtn.style.position = 'absolute';
+        delBtn.style.top = '-6px';
+        delBtn.style.right = '-6px';
+        delBtn.style.width = '20px';
+        delBtn.style.height = '20px';
+        delBtn.style.borderRadius = '50%';
+        delBtn.style.background = '#dc2626';
+        delBtn.style.color = '#fff';
+        delBtn.style.border = 'none';
+        delBtn.style.fontSize = '10px';
+        delBtn.style.display = 'flex';
+        delBtn.style.alignItems = 'center';
+        delBtn.style.justifyContent = 'center';
+        delBtn.style.cursor = 'pointer';
+        delBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        
+        delBtn.onclick = function(e) {
+            e.preventDefault();
+            postFilesBase64.splice(idx, 1);
+            renderPostImgPreview();
+        };
+        
+        wrapper.appendChild(delBtn);
+        container.appendChild(wrapper);
+    });
+    
+    const display = document.getElementById('largeFileLinkDisplay');
+    if (display) {
+        if (postLargeFileLink) {
+            display.innerHTML = `
+                <div style="background:rgba(129,140,248,0.06); border:1px solid rgba(129,140,248,0.2); border-radius:6px; padding:6px 12px; display:inline-flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <i class="fas fa-link"></i> <span style="font-weight:600;">ไฟล์แนบใหญ่:</span> ${postLargeFileLink}
+                    <button onclick="removeLargeFileLink()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-size:12px; padding:0 4px;"><i class="fas fa-trash-alt"></i></button>
+                </div>`;
+        } else {
+            display.innerHTML = '';
+        }
+    }
+};
+
+window.onPostFileSelected = function(input) {
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    
+    const previewContainer = document.getElementById('postImgPreviewContainer');
+    
+    // Add temporary loader spinner
+    let feedback = document.getElementById('compressingFeedback');
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'compressingFeedback';
+        feedback.style.cssText = 'color:#fbbf24; font-size:0.75rem; font-weight:500; display:flex; align-items:center; gap:6px; margin: 8px 0; width:100%;';
+        feedback.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ⏳ กำลังย่อขนาดภาพ กรุณารอสักครู่...`;
+        if (previewContainer) previewContainer.appendChild(feedback);
+    }
+    
+    const btn = document.getElementById('btnSubmitPost');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังเตรียมรูปภาพ...';
+    }
+    
+    const fileArray = Array.from(files);
+    let processedCount = 0;
+    
+    fileArray.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // High clarity compression (640 max width)
+                const maxW = 640;
+                const scale = Math.min(maxW / img.width, 1);
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                const compressed = canvas.toDataURL('image/jpeg', 0.65);
+                postFilesBase64.push(compressed);
+                
+                processedCount++;
+                if (processedCount === fileArray.length) {
+                    const fb = document.getElementById('compressingFeedback');
+                    if (fb) fb.remove();
+                    
+                    renderPostImgPreview();
+                    
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 ยืนยันการส่งงาน';
+                    }
+                }
+            };
+            img.onerror = function() {
+                processedCount++;
+                if (processedCount === fileArray.length) {
+                    const fb = document.getElementById('compressingFeedback');
+                    if (fb) fb.remove();
+                    
+                    renderPostImgPreview();
+                    
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 ยืนยันการส่งงาน';
+                    }
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+window.submitPost = async function() {
+    if (!studentUser) return;
+    const btn = document.getElementById('btnSubmitPost');
+    if (btn && btn.disabled) return; // Prevent double submits
+    
+    const title = document.getElementById('postTitle').value.trim();
+    const desc = document.getElementById('postDesc').value.trim();
+    
+    if (!title) {
+        showToast('กรุณากรอกหัวข้องานด้วยครับ', false);
+        return;
+    }
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังอัปโหลดรูปภาพไปยังคลังข้อมูล...';
+    }
+    
+    try {
+        // Upload images in parallel to bypass sequential latency and timeouts
+        const uploadPromises = postFilesBase64.map(async (att, i) => {
+            if (att.startsWith('data:image')) {
+                if (isStorageOffline) {
+                    console.log("Supabase Storage is marked offline, skipping assignment photo upload and using base64.");
+                    return att;
+                } else {
+                    try {
+                        const path = `${activeBoardId}/${studentUser.phone}_${Date.now()}_${i}.jpg`;
+                        let downloadUrl = att;
+                        await promiseWithTimeout(
+                            (async () => {
+                                downloadUrl = await uploadAssignmentPhoto(att, path);
+                            })(),
+                            5000,
+                            new Error("Assignment photo upload timeout")
+                        );
+                        return downloadUrl;
+                    } catch (uploadErr) {
+                        console.warn("Supabase Storage upload failed, using compressed base64 fallback:", uploadErr);
+                        isStorageOffline = true;
+                        return att;
+                    }
+                }
+            } else {
+                return att;
+            }
+        });
+        
+        const uploadedAttachments = await Promise.all(uploadPromises);
+        
+        if (postLargeFileLink) {
+            uploadedAttachments.push(postLargeFileLink);
+        }
+        
+        // Fetch only the board to modify it
+        const b = await getDoc('boards', activeBoardId);
+        if (!b) throw new Error("ไม่พบข้อมูลบอร์ดในระบบ");
+        
+        if (!b.classrooms) b.classrooms = [];
+        if (!b.classrooms[activeClassroomIndex]) b.classrooms[activeClassroomIndex] = { name: '', assignments: [] };
+        if (!b.classrooms[activeClassroomIndex].assignments) b.classrooms[activeClassroomIndex].assignments = [];
+        if (!b.classrooms[activeClassroomIndex].assignments[activeAssignmentIndex]) {
+            b.classrooms[activeClassroomIndex].assignments[activeAssignmentIndex] = { name: '', desc: '', posts: [] };
+        }
+        
+        let assignments = b.classrooms[activeClassroomIndex].assignments;
+        let a = assignments[activeAssignmentIndex];
+        if (!a.posts) a.posts = [];
+        
+        const idx = a.posts.findIndex(p => p && p.studentPhone === studentUser.phone);
+        let isGradedStatus = false;
+        
+        if (idx !== -1) {
+            const existingPost = a.posts[idx];
+            // Security verification: check if locked
+            if (existingPost.isGraded && existingPost.allowEdit !== true) {
+                showToast('งานชิ้นนี้ถูกส่งแล้วและไม่อนุญาตให้แก้ไขในขณะนี้ครับ', false);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🚀 ยืนยันการส่งงาน';
+                }
+                return;
+            }
+            isGradedStatus = existingPost.isGraded;
+        }
+        
+        const payload = {
+            title: title,
+            desc: desc,
+            studentName: studentUser.name,
+            studentPhone: studentUser.phone,
+            attachments: uploadedAttachments,
+            isGraded: isGradedStatus,
+            allowEdit: false, // Strict locking upon submission
+            ts: Date.now()
+        };
+        
+        const targetIndex = idx !== -1 ? idx : a.posts.length;
+        a.posts[targetIndex] = payload;
+        
+        await setDoc('boards', activeBoardId, b);
+        showToast('ส่งงานสำเร็จเรียบร้อยครับ!');
+        
+        postFilesBase64 = [];
+        postLargeFileLink = null;
+        
+        closeBoardModal();
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการส่งงาน: ' + e.message, false);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🚀 ยืนยันการส่งงาน';
+        }
+    }
+};
+
+// ────────────────────────────────────────────────────────────────
+// REAL-TIME PASSPORTS (DRAWING & SAFETY)
+// ────────────────────────────────────────────────────────────────
+
+let currentDrawingPassportData = null;
+let currentSafetyPassportData = null;
+
+async function listenToPassports() {
+    if (!studentUser) return;
+    
+    try {
+        const dp = await getDoc('passports', studentUser.phone);
+        if (dp) {
+            currentDrawingPassportData = dp;
+            updateDrawingPassportBooklet();
+            updateShopAssets();
+        }
+    } catch(e) {
+        console.error("Error loading drawing passport:", e);
+    }
+    
+    try {
+        const sp = await getDoc('safety_passports', studentUser.phone);
+        if (sp) {
+            currentSafetyPassportData = sp;
+            updateSafetyPassportBooklet();
+            updateShopAssets();
+        }
+    } catch(e) {
+        console.error("Error loading safety passport:", e);
+    }
+    
+    supabase.channel(`passports-${studentUser.phone}`)
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'classboard_kv',
+                filter: `doc_id=eq.${studentUser.phone}`
+            },
+            (payload) => {
+                if (payload.new && payload.new.collection === 'passports') {
+                    currentDrawingPassportData = payload.new.data;
+                    updateDrawingPassportBooklet();
+                    updateShopAssets();
+                } else if (payload.new && payload.new.collection === 'safety_passports') {
+                    currentSafetyPassportData = payload.new.data;
+                    updateSafetyPassportBooklet();
+                    updateShopAssets();
+                } else if (payload.new && payload.new.collection === 'passport_photos') {
+                    studentPhotosCache = payload.new.data;
+                    updateDrawingPassportBooklet();
+                    updateSafetyPassportBooklet();
+                }
+            }
+        )
+        .subscribe();
+}
+
+const DRAWING_CHALLENGES = [
+    { id: 1, week: 1, title: 'The Blind Artist: เขียนชื่อด้วยเส้นหนาโดยหลับตา' },
+    { id: 2, week: 2, title: 'Precision Master: แข่งความไวการใช้ไม้ฉาก' },
+    { id: 4, week: 4, title: 'Geometric Monster: สร้างสัตว์ประหลาดจากรูปทรง' },
+    { id: 7, week: 7, title: 'Dimension Detective: นักสืบจับผิดจุดบอกขนาด' },
+    { id: 8, week: 8, title: 'Isometric Maze: สร้างเขาวงกต 3 มิติ' },
+    { id: 9, week: 9, title: 'Boss Fight: ภารกิจวาดแบบชิ้นส่วนลับกลางภาค' },
+    { id: 11, week: 11, title: '3-View Visionary: สเก็ตช์ภาพฉาย 3 ด้านแบบรวดเร็ว' },
+    { id: 13, week: 13, title: 'X-Ray Drawing: วาดภาพตัดของสิ่งของในจินตนาการ' }
+];
+
+const SAFETY_CHALLENGES = [
+    { id: 1,  week: 'WK 1',  title: 'Safety Buddy Match' },
+    { id: 2,  week: 'WK 2',  title: 'Sign Hunter (LV.1)' },
+    { id: 3,  week: 'WK 3',  title: 'PPE Speed Run' },
+    { id: 4,  week: 'WK 4',  title: 'Danger Spotter' },
+    { id: 5,  week: 'WK 5',  title: 'Blindfold Trust' },
+    { id: 6,  week: 'WK 6',  title: 'Sign Hunter (LV.2)' },
+    { id: 7,  week: 'WK 7',  title: 'Stable Tower' },
+    { id: 8,  week: 'WK 8',  title: 'The Rescue Mission' },
+    { id: 9,  week: 'WK 10', title: 'SDS Decoder' },
+    { id: 10, week: 'WK 11', title: 'Knot Master' },
+    { id: 11, week: 'WK 12', title: 'The Safe Mover' },
+    { id: 12, week: 'WK 13', title: 'Ergo Fixer' },
+    { id: 13, week: 'WK 14', title: 'Audit Master' },
+    { id: 14, week: 'WK 15', title: 'The Life Saver' },
+    { id: 15, week: 'WK 16', title: 'Root Cause Detective' },
+    { id: 16, week: 'WK 17', title: 'Grand Finale Quiz' }
+];
+
+async function updateDrawingPassportBooklet() {
+    const p = currentDrawingPassportData;
+    if (!p) return;
+    
+    // Page 1 Cover
+    document.getElementById('dp-team-text').innerText = `ทีม: ${p.teamName || 'ยังไม่มีทีม'}`;
+    document.getElementById('dp-name-stu').innerText = p.firstName + ' ' + p.lastName;
+    document.getElementById('dp-name-bud').innerText = (p.buddy && p.buddy.fullName) ? p.buddy.fullName : 'ยังไม่มีบัดดี้';
+    
+    // Render Photos efficiently using cache
+    if (!studentPhotosCache) {
+        const ph = await getDoc('passport_photos', studentUser.phone);
+        if (ph) studentPhotosCache = ph;
+    }
+    
+    if (studentPhotosCache) {
+        const ph = studentPhotosCache;
+        if (ph.student) {
+            document.getElementById('dp-photo-stu').src = ph.student;
+            document.getElementById('dp-photo-stu').style.display = 'block';
+            document.getElementById('dp-stu-icon').style.display = 'none';
+        }
+        if (ph.buddy) {
+            document.getElementById('dp-photo-bud').src = ph.buddy;
+            document.getElementById('dp-photo-bud').style.display = 'block';
+            document.getElementById('dp-bud-icon').style.display = 'none';
+        }
+    }
+    
+    // Page 2 Stats
+    const points = p.points || 0;
+    const completedChals = Object.values(p.challenges || {}).filter(v => v === true).length;
+    const stamps = Math.floor(points / 20) + completedChals;
+    let rank = 'Trainee';
+    if (stamps >= 3 && stamps < 8) rank = '📐 Draftsman';
+    else if (stamps >= 8 && stamps < 12) rank = 'Expert';
+    else if (stamps >= 12) rank = '👑 Master';
+    
+    document.getElementById('dp-val-pts').innerText = points;
+    document.getElementById('dp-val-stamps').innerText = stamps;
+    document.getElementById('dp-val-rank').innerText = rank;
+    
+    document.getElementById('dp-cov-val-pts').innerText = points;
+    document.getElementById('dp-cov-val-stamps').innerText = stamps;
+    document.getElementById('dp-cov-val-rank').innerText = rank;
+    
+    // Progress fill (out of 24 stamps = 480 points)
+    const pct = Math.min((points / 480) * 100, 100);
+    document.getElementById('dp-prog-fill').style.width = pct + '%';
+    
+    document.getElementById('dp-val-phone').innerText = p.phone || '-';
+    document.getElementById('dp-val-class').innerText = p.className || '-';
+    document.getElementById('dp-val-date').innerText = p.dateJoined ? new Date(p.dateJoined).toLocaleDateString('th-TH') : '-';
+    
+    // Page 3 Challenges
+    const chContainer = document.getElementById('dp-challenges-list');
+    const chState = p.challenges || {};
+    
+    chContainer.innerHTML = DRAWING_CHALLENGES.map(c => {
+        const isChecked = chState[c.id] === true;
+        return `<div class="chal-item">
+            <div class="chal-checkbox ${isChecked ? 'checked' : ''}">
+                ${isChecked ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+            <div style="font-size:0.75rem;line-height:1.3">
+                <strong>สัปดาห์ที่ ${c.week}:</strong> ${c.title}
+            </div>
+        </div>`;
+    }).join('');
+    
+    // Page 4 Chart
+    renderBookletChart('dp', p.history || []);
+}
+
+async function updateSafetyPassportBooklet() {
+    const p = currentSafetyPassportData;
+    if (!p) return;
+    
+    // Page 1 Cover
+    document.getElementById('sp-team-text').innerText = `ทีม: ${p.teamName || 'ยังไม่มีทีม'}`;
+    document.getElementById('sp-name-stu').innerText = p.firstName + ' ' + p.lastName;
+    document.getElementById('sp-name-bud').innerText = (p.buddy && p.buddy.fullName) ? p.buddy.fullName : 'ยังไม่มีบัดดี้';
+    
+    // Render Photos efficiently using cache
+    if (!studentPhotosCache) {
+        const ph = await getDoc('passport_photos', studentUser.phone);
+        if (ph) studentPhotosCache = ph;
+    }
+    
+    if (studentPhotosCache) {
+        const ph = studentPhotosCache;
+        if (ph.student) {
+            document.getElementById('sp-photo-stu').src = ph.student;
+            document.getElementById('sp-photo-stu').style.display = 'block';
+            document.getElementById('sp-stu-icon').style.display = 'none';
+        }
+        if (ph.buddy) {
+            document.getElementById('sp-photo-bud').src = ph.buddy;
+            document.getElementById('sp-photo-bud').style.display = 'block';
+            document.getElementById('sp-bud-icon').style.display = 'none';
+        }
+    }
+    
+    // Page 2 Stats
+    const points = p.points || 0;
+    const completedChals = Object.values(p.challenges || {}).filter(v => v === true).length;
+    const stamps = Math.floor(points / 20) + completedChals;
+    let rank = 'Guardian Trainee';
+    if (stamps >= 8 && stamps <= 10) rank = '🥉 Bronze Guardian';
+    else if (stamps >= 11 && stamps <= 13) rank = '🥈 Silver Guardian';
+    else if (stamps >= 14 && stamps <= 16) rank = '🥇 Gold Guardian';
+    else if (stamps > 16) rank = '🏆 Grand Guardian';
+    
+    document.getElementById('sp-val-pts').innerText = points;
+    document.getElementById('sp-val-stamps').innerText = stamps;
+    document.getElementById('sp-val-rank').innerText = rank;
+    
+    document.getElementById('sp-cov-val-pts').innerText = points;
+    document.getElementById('sp-cov-val-stamps').innerText = stamps;
+    document.getElementById('sp-cov-val-rank').innerText = rank;
+    
+    // Progress fill (out of 16 stamps = 320 points)
+    const pct = Math.min((points / 320) * 100, 100);
+    document.getElementById('sp-prog-fill').style.width = pct + '%';
+    
+    document.getElementById('sp-val-phone').innerText = p.phone || '-';
+    document.getElementById('sp-val-class').innerText = p.className || '-';
+    document.getElementById('sp-val-date').innerText = p.dateJoined ? new Date(p.dateJoined).toLocaleDateString('th-TH') : '-';
+    
+    // Page 3 Challenges
+    const chContainer = document.getElementById('sp-challenges-list');
+    const chState = p.challenges || {};
+    
+    chContainer.innerHTML = SAFETY_CHALLENGES.map(c => {
+        const isChecked = chState[c.id] === true;
+        return `<div class="chal-item">
+            <div class="chal-checkbox ${isChecked ? 'checked' : ''}">
+                ${isChecked ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+            <div style="font-size:0.75rem;line-height:1.3">
+                <strong>${c.week}:</strong> ${c.title}
+            </div>
+        </div>`;
+    }).join('');
+    
+    // Page 4 Chart
+    renderBookletChart('sp', p.history || []);
+}
+
+function renderBookletChart(type, history) {
+    // Generate cumulative points list
+    let cumulative = 0;
+    const labels = ['เริ่ม'];
+    const dataPoints = [0];
+    
+    // Take the last 5 updates
+    const lastUpdates = history.slice(-5);
+    lastUpdates.forEach((h, i) => {
+        if (h.type === 'plus') cumulative += h.amount;
+        else if (h.type === 'minus') cumulative = Math.max(0, cumulative - h.amount);
+        
+        labels.push(`ครั้งที่ ${i+1}`);
+        dataPoints.push(cumulative);
+    });
+    
+    const ctx = document.getElementById(type === 'dp' ? 'dpGrowthChart' : 'spGrowthChart').getContext('2d');
+    
+    if (type === 'dp') {
+        if (dpChart) dpChart.destroy();
+        dpChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'คะแนนเขียนแบบ',
+                    data: dataPoints,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                    y: { ticks: { color: '#64748b', font: { size: 9 } } }
+                }
+            }
+        });
+    } else {
+        if (spChart) spChart.destroy();
+        spChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'คะแนนความปลอดภัย',
+                    data: dataPoints,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                    y: { ticks: { color: '#64748b', font: { size: 9 } } }
+                }
+            }
+        });
+    }
+}
+
+window.navBooklet = function(type, direction) {
+    if (type === 'dp') {
+        dpPageIndex += direction;
+        if (dpPageIndex < 1) dpPageIndex = 1;
+        if (dpPageIndex > 4) dpPageIndex = 4;
+        
+        document.getElementById('btn-dp-prev').disabled = dpPageIndex === 1;
+        document.getElementById('btn-dp-next').disabled = dpPageIndex === 4;
+        document.getElementById('dp-page-num').innerText = dpPageIndex + '/4';
+        
+        // Toggle pages
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`dp-p${i}`).classList.toggle('active', i === dpPageIndex);
+        }
+    } else {
+        spPageIndex += direction;
+        if (spPageIndex < 1) spPageIndex = 1;
+        if (spPageIndex > 4) spPageIndex = 4;
+        
+        document.getElementById('btn-sp-prev').disabled = spPageIndex === 1;
+        document.getElementById('btn-sp-next').disabled = spPageIndex === 4;
+        document.getElementById('sp-page-num').innerText = spPageIndex + '/4';
+        
+        // Toggle pages
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`sp-p${i}`).classList.toggle('active', i === spPageIndex);
+        }
+    }
+};
+
+window.switchPassportType = function(type, event) {
+    const evt = event || window.event;
+    currentActivePassportType = type;
+    document.querySelectorAll('.passport-subtab').forEach(btn => btn.classList.remove('active'));
+    if (evt && evt.target) evt.target.classList.add('active');
+    
+    if (type === 'drawing') {
+        document.getElementById('drawingPassportZone').style.display = 'block';
+        document.getElementById('safetyPassportZone').style.display = 'none';
+    } else {
+        document.getElementById('drawingPassportZone').style.display = 'none';
+        document.getElementById('safetyPassportZone').style.display = 'block';
+    }
+};
+
+window.switchMainTab = function(tabName) {
+    currentActiveMainTab = tabName;
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+    
+    document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
+    document.getElementById('sec' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
+};
+
+function updateShopAssets() {
+    if (currentDrawingPassportData) {
+        const dp = currentDrawingPassportData;
+        const pts = dp.points || 0;
+        const completedChals = Object.values(dp.challenges || {}).filter(v => v === true).length;
+        const stamps = Math.floor(pts / 20) + completedChals;
+        
+        document.getElementById('shopDrawingPoints').innerText = pts;
+        document.getElementById('shopDrawingStamps').innerText = stamps;
+        
+        // Calculate Drawing music chances
+        const earned = Math.floor(stamps / 2);
+        const used = dp.music_chances_used || 0;
+        const avail = Math.max(0, earned - used);
+        document.getElementById('musicDrawingChances').innerText = avail;
+    }
+    if (currentSafetyPassportData) {
+        const sp = currentSafetyPassportData;
+        const pts = sp.points || 0;
+        const completedChals = Object.values(sp.challenges || {}).filter(v => v === true).length;
+        const stamps = Math.floor(pts / 20) + completedChals;
+        
+        document.getElementById('shopSafetyPoints').innerText = pts;
+        document.getElementById('shopSafetyStamps').innerText = stamps;
+        
+        // Calculate Safety music chances
+        const earned = Math.floor(stamps / 2);
+        const used = sp.music_chances_used || 0;
+        const avail = Math.max(0, earned - used);
+        document.getElementById('musicSafetyChances').innerText = avail;
+    }
+}
+
+window.redeemReward = function(rewardType, rewardName, subjectType, pointsCost, stampsCost) {
+    if (!studentUser) return;
+    
+    const subText = subjectType === 'drawing' ? 'เขียนแบบเทคนิคเบื้องต้น' : 'ความปลอดภัยในสถานศึกษา';
+    const costText = pointsCost > 0 ? `${pointsCost} แต้ม` : `${stampsCost} ตราประทับ`;
+    
+    document.getElementById('shopConfirmText').innerText = `คุณแน่ใจใช่หรือไม่ว่าต้องการแลกสิทธิ์\n"${rewardName}"\nโดยใช้ ${costText} จากวิชา ${subText}?`;
+    
+    const yesBtn = document.getElementById('shopConfirmYesBtn');
+    yesBtn.onclick = async () => {
+        yesBtn.disabled = true;
+        yesBtn.innerText = 'กำลังดำเนินการ...';
+        
+        try {
+            await executeRedeem(rewardType, rewardName, subjectType, pointsCost, stampsCost);
+        } finally {
+            yesBtn.disabled = false;
+            yesBtn.innerText = 'แลกของรางวัล';
+            closeShopConfirmModal();
+        }
+    };
+    
+    document.getElementById('modalShopConfirm').classList.add('active');
+};
+
+window.closeShopConfirmModal = function() {
+    document.getElementById('modalShopConfirm').classList.remove('active');
+};
+
+async function executeRedeem(rewardType, rewardName, subjectType, pointsCost, stampsCost) {
+    const subText = subjectType === 'drawing' ? 'เขียนแบบเทคนิคเบื้องต้น' : 'ความปลอดภัยในสถานศึกษา';
+    try {
+        const passportCollection = subjectType === 'drawing' ? 'passports' : 'safety_passports';
+        const p = await getDoc(passportCollection, studentUser.phone);
+        if (!p) {
+            showToast('ไม่พบข้อมูลพาสปอร์ตของคุณในระบบ', false);
+            return;
+        }
+        
+        if (pointsCost > 0) {
+            const currentPoints = p.points || 0;
+            if (currentPoints < pointsCost) {
+                showToast(`แต้มของคุณไม่เพียงพอ! (คุณมี ${currentPoints} แต้ม ต้องการ ${pointsCost} แต้ม)`, false);
+                return;
+            }
+            
+            const newPoints = currentPoints - pointsCost;
+            const history = p.history || [];
+            history.push({
+                type: 'minus',
+                amount: pointsCost,
+                reason: `แลกของรางวัล: ${rewardName}`,
+                timestamp: Date.now()
+            });
+            
+            await updateDoc(passportCollection, studentUser.phone, {
+                points: newPoints,
+                history: history
+            });
+            
+        } else if (stampsCost > 0) {
+            const currentPoints = p.points || 0;
+            const completedChals = Object.values(p.challenges || {}).filter(v => v === true).length;
+            const currentStamps = Math.floor(currentPoints / 20) + completedChals;
+            const earnedChances = Math.floor(currentStamps / 2);
+            const usedChances = p.music_chances_used || 0;
+            const availableChances = earnedChances - usedChances;
+            
+            if (availableChances <= 0) {
+                showToast(`สิทธิ์เปิดเพลงของคุณไม่เพียงพอ! ตราประทับสะสมวิชา ${subText} ต้องมีทุกๆ 2 ดวง เพื่อเพิ่มสิทธิ์เปิดเพลงได้ 1 ครั้ง`, false);
+                return;
+            }
+            
+            await updateDoc(passportCollection, studentUser.phone, {
+                music_chances_used: usedChances + 1
+            });
+        }
+        
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        const newRedeemId = 'redeem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const redemptionPayload = {
+            id: newRedeemId,
+            studentPhone: studentUser.phone,
+            studentName: studentUser.name,
+            studentClassroom: studentUser.classroom,
+            rewardType: rewardType,
+            rewardName: rewardName,
+            costPoints: pointsCost,
+            costStamps: stampsCost,
+            subjectType: subjectType,
+            code: code,
+            status: 'pending',
+            timestamp: Date.now()
+        };
+        
+        await setDoc('redemptions', newRedeemId, redemptionPayload);
+        showToast('🎟️ ส่งคำขอแลกสำเร็จ! กรุณายื่นรหัส 4 หลักให้ครูอนุมัติ');
+        
+    } catch(e) {
+        showToast('เกิดข้อผิดพลาดในการแลกรางวัล: ' + e.message, false);
+    }
+}
+
+async function listenToStudentRedemptions() {
+    if (!studentUser) return;
+    
+    async function fetchAndUpdate() {
+        try {
+            const { data, error } = await supabase
+                .from('classboard_kv')
+                .select('doc_id, data')
+                .eq('collection', 'redemptions')
+                .eq('data->>studentPhone', studentUser.phone);
+            if (error) throw error;
+            
+            const redemptionsMap = {};
+            if (data) {
+                data.forEach(row => {
+                    redemptionsMap[row.doc_id] = row.data;
+                });
+            }
+            
+            const snap = {
+                exists: () => Object.keys(redemptionsMap).length > 0,
+                val: () => redemptionsMap
+            };
+            
+            const zone = document.getElementById('shopActiveRedemptionsZone');
+            const list = document.getElementById('shopActiveRedemptionsList');
+            
+            updateStudentHistoryUI(snap);
+            
+            if (Object.keys(redemptionsMap).length === 0) {
+                zone.style.display = 'none';
+                return;
+            }
+            
+            const active = Object.values(redemptionsMap).filter(r => r.status === 'pending');
+            
+            if (active.length === 0) {
+                zone.style.display = 'none';
+                return;
+            }
+            
+            zone.style.display = 'block';
+            list.innerHTML = active.map(r => {
+                const subText = r.subjectType === 'drawing' ? 'เขียนแบบเทคนิคเบื้องต้น' : 'ความปลอดภัยในสถานศึกษา';
+                return `
+                    <div style="background:rgba(251,191,36,0.08); border:1px dashed var(--gold); border-radius:12px; padding:16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:0.95rem; font-weight:700; color:#fff;">${r.rewardName}</div>
+                            <div style="font-size:0.75rem; color:var(--text2); margin-top:4px;">วิชา: ${subText}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:1.6rem; font-weight:800; color:var(--gold); letter-spacing:2px; font-family:monospace;">${r.code}</div>
+                            <div style="font-size:0.7rem; color:var(--gold); animation: pulse 1.5s infinite; margin-top:2px; font-weight:600;"><i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i>รอครูอนุมัติ...</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch(e) {
+            console.error("Error in listenToStudentRedemptions:", e);
+        }
+    }
+    
+    await fetchAndUpdate();
+    
+    supabase.channel(`redemptions-${studentUser.phone}`)
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'classboard_kv',
+                filter: 'collection=eq.redemptions'
+            },
+            async (payload) => {
+                if (payload.new && payload.new.data && payload.new.data.studentPhone === studentUser.phone) {
+                    await fetchAndUpdate();
+                } else if (payload.old) {
+                    await fetchAndUpdate();
+                }
+            }
+        )
+        .subscribe();
+}
+
+async function updateStudentHistoryUI(preloadedRedeemsSnap = null) {
+    if (!studentUser) return;
+    const historyContainer = document.getElementById('studentShopHistoryList');
+    if (!historyContainer) return;
+    
+    try {
+        const listItems = [];
+        
+        let redeemsMap = null;
+        if (preloadedRedeemsSnap) {
+            redeemsMap = preloadedRedeemsSnap.val();
+        } else {
+            const { data, error } = await supabase
+                .from('classboard_kv')
+                .select('doc_id, data')
+                .eq('collection', 'redemptions')
+                .eq('data->>studentPhone', studentUser.phone);
+            if (error) throw error;
+            
+            redeemsMap = {};
+            if (data) {
+                data.forEach(row => {
+                    redeemsMap[row.doc_id] = row.data;
+                });
+            }
+        }
+        
+        if (redeemsMap) {
+            Object.values(redeemsMap).forEach(r => {
+                listItems.push({
+                    type: 'redemption',
+                    title: r.rewardName,
+                    subject: r.subjectType === 'drawing' ? 'เขียนแบบฯ' : 'ความปลอดภัยฯ',
+                    cost: r.costPoints > 0 ? `-${r.costPoints} แต้ม` : `-${r.costStamps} ดวง`,
+                    status: r.status,
+                    timestamp: r.timestamp || Date.now(),
+                    code: r.code
+                });
+            });
+        }
+        
+        let historyClearedAt = 0;
+        
+        const dp = await getDoc('passports', studentUser.phone);
+        if (dp) {
+            if (dp.historyClearedAt && dp.historyClearedAt > historyClearedAt) {
+                historyClearedAt = dp.historyClearedAt;
+            }
+            if (dp.history && Array.isArray(dp.history)) {
+                dp.history.forEach(item => {
+                    listItems.push({
+                        type: 'adjustment',
+                        title: item.reason || 'ปรับแต้มสะสม',
+                        subject: 'เขียนแบบฯ',
+                        cost: item.type === 'plus' ? `+${item.amount} แต้ม` : `-${item.amount} แต้ม`,
+                        status: 'approved',
+                        timestamp: item.timestamp || Date.now()
+                    });
+                });
+            }
+        }
+        
+        const sp = await getDoc('safety_passports', studentUser.phone);
+        if (sp) {
+            if (sp.historyClearedAt && sp.historyClearedAt > historyClearedAt) {
+                historyClearedAt = sp.historyClearedAt;
+            }
+            if (sp.history && Array.isArray(sp.history)) {
+                sp.history.forEach(item => {
+                    listItems.push({
+                        type: 'adjustment',
+                        title: item.reason || 'ปรับแต้มสะสม',
+                        subject: 'ความปลอดภัยฯ',
+                        cost: item.type === 'plus' ? `+${item.amount} แต้ม` : `-${item.amount} แต้ม`,
+                        status: 'approved',
+                        timestamp: item.timestamp || Date.now()
+                    });
+                });
+            }
+        }
+        
+        const visibleItems = listItems.filter(item => item.timestamp > historyClearedAt);
+        visibleItems.sort((a, b) => b.timestamp - a.timestamp);
+        
+        if (visibleItems.length === 0) {
+            historyContainer.innerHTML = `<div style="text-align:center; color:var(--text2); font-size:0.8rem; padding:10px;">ไม่มีประวัติการทำรายการ</div>`;
+            return;
+        }
+        
+        historyContainer.innerHTML = visibleItems.map(item => {
+            const d = new Date(item.timestamp);
+            const timeStr = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const dt = `เวลา: ${timeStr} วันที่: ${dateStr}`;
+            
+            let statusBadge = '';
+            let bg = 'rgba(255,255,255,0.02)';
+            
+            if (item.type === 'redemption') {
+                if (item.status === 'pending') {
+                    statusBadge = `<span style="font-size:0.7rem; color:var(--gold); border:1px solid var(--gold); border-radius:4px; padding:2px 6px;">รหัส ${item.code} รออนุมัติ</span>`;
+                    bg = 'rgba(251,191,36,0.04)';
+                } else if (item.status === 'approved') {
+                    statusBadge = `<span style="font-size:0.7rem; color:#10b981; border:1px solid #10b981; border-radius:4px; padding:2px 6px;">อนุมัติแล้ว</span>`;
+                } else if (item.status === 'rejected') {
+                    statusBadge = `<span style="font-size:0.7rem; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:2px 6px;">ปฏิเสธ (คืนแต้ม)</span>`;
+                }
+            } else {
+                statusBadge = `<span style="font-size:0.7rem; color:#60a5fa; border:1px solid #60a5fa; border-radius:4px; padding:2px 6px;">รายการปรับแต้ม</span>`;
+            }
+            
+            const costColor = item.cost.startsWith('+') ? '#10b981' : '#f87171';
+            
+            return `
+                <div style="background:${bg}; border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; font-size:0.8rem;">
+                    <div>
+                        <div style="color:#fff; font-weight:600; margin-bottom:2px;">${item.title}</div>
+                        <div style="color:var(--text2); font-size:0.7rem;">วิชา ${item.subject} • ${dt}</div>
+                    </div>
+                    <div style="text-align:right; display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                        <strong style="color:${costColor}; font-size:0.85rem;">${item.cost}</strong>
+                        ${statusBadge}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch(e) {
+        historyContainer.innerHTML = `<div style="text-align:center; color:#f87171; font-size:0.8rem; padding:10px;">เกิดข้อผิดพลาดในการโหลดประวัติ</div>`;
+    }
+}
+
+window.askStudentConfirm = function(title, msg, onYes) {
+    const modal = document.getElementById('modalStudentConfirm');
+    const titleEl = document.getElementById('stuConfirmTitle');
+    const textEl = document.getElementById('stuConfirmText');
+    const yesBtn = document.getElementById('stuConfirmYesBtn');
+    const noBtn = document.getElementById('stuConfirmNoBtn');
+    
+    if(!modal || !titleEl || !textEl || !yesBtn || !noBtn) return;
+    
+    titleEl.innerText = title;
+    textEl.innerText = msg;
+    modal.style.display = 'flex';
+    
+    yesBtn.onclick = () => {
+        modal.style.display = 'none';
+        onYes();
+    };
+    noBtn.onclick = () => {
+        modal.style.display = 'none';
+    };
+};
+
+window.clearStudentHistory = function() {
+    if (!studentUser) return;
+    
+    askStudentConfirm("ล้างประวัติของคุณ?", "คุณมั่นใจใช่หรือไม่ว่าต้องการล้างประวัติการทำรายการของคุณในหน้านี้?\n(หมายเหตุ: คะแนนสะสม ตราประทับ และกราฟความก้าวหน้าของคุณจะไม่ได้รับผลกระทบใดๆ และครูจะยังเห็นบันทึกเพื่อตรวจสอบงานได้ตามปกติ)", async () => {
+        try {
+            const now = Date.now();
+            await updateDoc('passports', studentUser.phone, {
+                historyClearedAt: now
+            });
+            await updateDoc('safety_passports', studentUser.phone, {
+                historyClearedAt: now
+            });
+            
+            showToast("🧹 ล้างประวัติการทำรายการของคุณเรียบร้อยครับ!");
+            updateStudentHistoryUI();
+        } catch(e) {
+            showToast("เกิดข้อผิดพลาดในการล้างประวัติ: " + e.message, false);
+        }
+    });
+};
+</script>
+</body>
+</html>
